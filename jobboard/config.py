@@ -20,6 +20,8 @@ class Settings:
         f"Contact {os.getenv('CONTACT_EMAIL', 'hello@example.com')} for payment instructions.",
     )
     ads_enabled: bool = os.getenv("ADS_ENABLED", "0") == "1"
+    anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
+    anthropic_model: str = os.getenv("ANTHROPIC_MODEL", "claude-haiku-5-5")
 
     def __post_init__(self):
         if self.site_url.startswith("https://") and (

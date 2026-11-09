@@ -12,10 +12,11 @@
   <label class="flex min-h-11 items-center gap-2"><input type="checkbox" name="has_salary" value="true" {% if has_salary %}checked{% endif %}>Salary listed</label>
   <button class="min-h-11 rounded bg-indigo-700 px-4 text-white">Search jobs</button>
 </form>
-<p class="mb-3">{{ total }} jobs</p>
+<p class="mb-3">{{ total }} jobs {% if cv_exists %}· <a href="/matches" class="text-indigo-800 underline">View my matches</a>{% else %}· <a href="/upload-cv" class="text-indigo-800 underline">Match jobs to your CV</a>{% endif %}</p>
 <section aria-label="Job listings" class="grid gap-3">
   {% for job in jobs %}<article class="rounded-2xl bg-white p-5 shadow">
     {% if job.id in featured_ids %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-blue-50 px-3 font-semibold">Featured</p>{% endif %}
+    {% if cv_exists and job.id in match_scores %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-green-50 px-3 font-semibold text-green-900">{{ match_scores[job.id] }}% CV match</p>{% endif %}
     <h2 class="text-xl font-semibold"><a href="/jobs/{{ job.id }}-{{ job.title|lower|replace(' ', '-') }}">{{ job.title }}</a></h2>
     <p>{{ job.company }} · {{ job.location }}{% if job.is_remote %} · Remote{% endif %}</p>
     {% if job.source == 'direct' and job.salary_currency and (job.salary_min is not none or job.salary_max is not none) %}<p>{{ job.salary_currency }}{% if job.salary_min is not none %} {{ "{:,.0f}".format(job.salary_min) }}{% endif %}{% if job.salary_min is not none and job.salary_max is not none %} to{% endif %}{% if job.salary_max is not none %} {{ "{:,.0f}".format(job.salary_max) }}{% endif %} / month</p>{% elif job.salary %}<p>{{ job.salary }}</p>{% endif %}

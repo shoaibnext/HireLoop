@@ -1,5 +1,9 @@
 # Changelog
 
+## M4 — CV upload and matching
+- Added anonymous PDF/DOCX CV upload, in-memory extraction, skill-based match scoring, optional privacy-minimized Claude explanations, and immediate CV deletion.
+- Added cached match results, CV expiry cleanup command and daily workflow, migration, and privacy documentation.
+
 ## M3 — Employer flow
 - Added employer signup/sign-in, signed sessions, CSRF protection, request limits, direct job posting, owner dashboard, and admin moderation/payment controls.
 - Added configurable pricing, direct-job expiry and featured placement, direct-only JobPosting JSON-LD, and employer-flow tests.

@@ -10,3 +10,6 @@
 - M3 requires all newly submitted direct posts to remain pending until admin approval, including later posts from an existing employer.
 - Featured placement is activated only after an admin records payment; featured duration and expiry are fixed at 30 days. The amount and payment instructions are configurable without wiring a payment gateway.
 - Remote JobPosting markup uses Pakistan as the applicant location requirement because this product's direct roles target candidates in Pakistan; local direct roles use the employer-entered location with country code PK.
+- M4 stores a keyed HMAC of the signed anonymous session identifier rather than the identifier itself. CV files are processed in memory, with extracted text and normalized skills expiring after 30 days.
+- Match scores allocate 85 points proportionally across listed job skills, plus 10 for matching a known experience level and 5 for a selected location or remote preference; no job skills means no skill points. Claude receives only the job title and skill overlap labels, and deterministic explanations remain the fallback.
+- Match candidates are limited to the 200 most recent active, public jobs. Match results are cached by CV profile and job; expiry cleanup runs daily through GitHub Actions.

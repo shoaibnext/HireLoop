@@ -4,6 +4,7 @@
 {% if job_posting_ld %}<script type="application/ld+json">{{ job_posting_ld|tojson }}</script>{% endif %}
 <article class="rounded-2xl bg-white p-6 shadow">
   {% if featured %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-blue-50 px-3 font-semibold">Featured</p>{% endif %}
+  {% if match_score is not none %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-green-50 px-3 font-semibold text-green-900">{{ match_score }}% CV match</p>{% endif %}
   <h1 class="text-3xl font-bold">{{ job.title }}</h1>
   <p>{{ job.company }} · {{ job.location }}</p>
   {% if job.source == 'remotive' %}<p>Listed via <a href="{{ job.source_url }}" rel="nofollow">Remotive</a>.</p>{% elif job.source == 'remoteok' %}<p>Listed via <a href="{{ job.source_url }}">RemoteOK</a>.</p>{% endif %}

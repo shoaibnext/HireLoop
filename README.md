@@ -51,3 +51,9 @@ python ingest.py --stats   # show the latest ten per-source runs
 ```
 
 The ingester uses only Remotive and RemoteOK's public JSON APIs. Remotive requests are limited to four per UTC day with a six-hour minimum gap; the daily Action runs at 03:00 UTC. Configure the GitHub repository secret `DATABASE_URL` with the same Postgres database used by the web service. The workflow runs `alembic upgrade head` before ingestion and can also be started with `workflow_dispatch`.
+
+## CV matching and privacy
+
+At `/upload-cv`, upload a PDF or DOCX up to 5 MB to get explainable matches at `/matches`. HireLoop keeps extracted text and recognized skills only; it never saves the uploaded file. CV data is attached to a signed anonymous session, expires after 30 days, and can be removed immediately with **Delete my CV**. It is not shared with employers unless you explicitly apply. If `ANTHROPIC_API_KEY` is configured, match explanations send Anthropic only a job title and matched/missing skill labels, not CV text. Without the key, HireLoop uses a deterministic explanation.
+
+Set the optional `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in the environment to enable generated explanations. A daily GitHub Actions cleanup workflow deletes expired CV data at 03:30 UTC; configure the repository `DATABASE_URL` secret. Run cleanup manually with `python cleanup_cvs.py` after `alembic upgrade head`.

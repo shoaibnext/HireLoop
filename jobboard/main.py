@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from starlette.middleware.sessions import SessionMiddleware
 
 from .config import settings
-from .models import Base, Employer, Job, engine, get_db
+from .models import Base, CVProfile, Employer, Job, MatchCache, engine, get_db
 from .rate_limit import limiter
 from .skills import strip_html
 
@@ -66,6 +66,7 @@ app.add_middleware(
     same_site="lax",
     https_only=settings.site_url.startswith("https://"),
     session_cookie="hireloop_session",
+    max_age=30 * 24 * 60 * 60,
 )
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
@@ -157,6 +158,14 @@ def home(
         .limit(20)
         .all()
     )
+    cv_key = _cv_session_hash(request)
+    profile = db.query(CVProfile).filter_by(session_key_hash=cv_key).one_or_none() if cv_key else None
+    if profile and _as_utc(profile.expires_at) <= datetime.now(UTC):
+        profile = None
+    match_scores = {
+        row.job_id: row.score
+        for row in db.query(MatchCache).filter_by(cv_id=profile.id).filter(MatchCache.job_id.in_([job.id for job in jobs])).all()
+    } if profile and jobs else {}
     return templates.TemplateResponse(
         request=request,
         name="home.html",
@@ -179,6 +188,8 @@ def home(
                 and _as_utc(job.featured_until) > datetime.now(UTC)
             },
             "contact_email": settings.contact_email,
+            "cv_exists": profile is not None,
+            "match_scores": match_scores,
         },
     )
 
@@ -213,6 +224,11 @@ def job_detail(job_ref: str, request: Request, db: Session = Depends(get_db)):
     safe_description = nh3.clean(
         job.description, tags=ALLOWED_TAGS, attributes={}, link_rel=None
     )
+    cv_key = _cv_session_hash(request)
+    profile = db.query(CVProfile).filter_by(session_key_hash=cv_key).one_or_none() if cv_key else None
+    if profile and _as_utc(profile.expires_at) <= datetime.now(UTC):
+        profile = None
+    cached_match = db.query(MatchCache).filter_by(cv_id=profile.id, job_id=job.id).one_or_none() if profile else None
     return templates.TemplateResponse(
         request=request,
         name="job_detail.html",
@@ -225,6 +241,7 @@ def job_detail(job_ref: str, request: Request, db: Session = Depends(get_db)):
                 job.featured_until and _as_utc(job.featured_until) > datetime.now(UTC)
             ),
             "contact_email": settings.contact_email,
+            "match_score": cached_match.score if cached_match else None,
         },
     )
 
@@ -239,7 +256,7 @@ def static_page(page_name: str, request: Request):
         "contact": ("Contact", f"Contact us at {settings.contact_email}."),
         "privacy": (
             "Privacy",
-            "We collect only the information needed to operate HireLoop. Contact us with privacy requests.",
+            "When you upload a CV, we store only extracted text and recognized skills, never the original file. CV data is linked to your signed anonymous session, is automatically deleted after 30 days, and can be deleted immediately with Delete my CV. We do not share it with employers unless you explicitly choose to apply. If optional match explanations are enabled, Anthropic receives only the job title and matched or missing skill names, never your CV text.",
         ),
     }
     if page_name not in pages:
@@ -249,19 +266,6 @@ def static_page(page_name: str, request: Request):
         request=request,
         name="page.html",
         context={"title": title, "body": body, "noindex": False},
-    )
-
-
-@app.get("/upload-cv", response_class=HTMLResponse)
-def coming_soon(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="page.html",
-        context={
-            "title": "Coming soon",
-            "body": "This feature is coming soon.",
-            "noindex": True,
-        },
     )
 
 
@@ -408,6 +412,18 @@ def job_posting_ld(db: Session, job: Job) -> dict | None:
     return data
 
 
+from .cv import router as cv_router
 from .employer import router as employer_router
 
 app.include_router(employer_router)
+app.include_router(cv_router)
+
+
+def _cv_session_hash(request: Request) -> str | None:
+    import hashlib
+    import hmac
+
+    token = request.session.get("cv_session_id")
+    if not token:
+        return None
+    return hmac.new(settings.secret_key.encode(), token.encode(), hashlib.sha256).hexdigest()

@@ -6,6 +6,7 @@ from sqlalchemy.pool import StaticPool
 
 from jobboard.main import app, get_db
 from jobboard.models import Base, Job
+from jobboard.rate_limit import limiter
 
 
 @pytest.fixture
@@ -26,6 +27,7 @@ def db_session():
 
 @pytest.fixture
 def client(db_session):
+    limiter.reset()
     def override_get_db():
         yield db_session
 

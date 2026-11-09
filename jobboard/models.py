@@ -143,6 +143,34 @@ class Employer(Base):
     )
 
 
+class CVProfile(Base):
+    __tablename__ = "cv_profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    session_key_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    extracted_text: Mapped[str] = mapped_column(Text, nullable=False)
+    skills: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, index=True)
+
+
+class MatchCache(Base):
+    __tablename__ = "match_cache"
+    __table_args__ = (
+        UniqueConstraint("cv_id", "job_id", name="uq_match_cache_cv_job"),
+        CheckConstraint("score >= 0 AND score <= 100", name="ck_match_cache_score"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    cv_id: Mapped[int] = mapped_column(ForeignKey("cv_profiles.id", ondelete="CASCADE"), nullable=False, index=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True)
+    score: Mapped[int] = mapped_column(Integer, nullable=False)
+    matched_skills: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    missing_skills: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    why: Mapped[str] = mapped_column(String(500), nullable=False)
+    computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 engine = create_engine(
     settings.database_url,
     connect_args={"check_same_thread": False}
