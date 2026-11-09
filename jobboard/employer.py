@@ -19,7 +19,7 @@ from sqlalchemy.orm import Session
 
 from .config import settings
 from .ingest import JOB_HTML_TAGS
-from .models import Employer, Job, User, get_db
+from .models import Application, Employer, Job, User, get_db
 from .rate_limit import limiter
 from .skills import detect_level, extract_skills, strip_html
 
@@ -352,6 +352,9 @@ def employer_dashboard(request: Request, db: Session = Depends(get_db)):
         .order_by(Job.created_at.desc())
         .all()
     )
+    application_count = (
+        db.query(Application).filter_by(employer_id=employer.id).count()
+    )
     return _page(
         request,
         "employer_dashboard.html",
@@ -361,6 +364,7 @@ def employer_dashboard(request: Request, db: Session = Depends(get_db)):
         payment_instructions=settings.payment_instructions,
         pricing=settings.featured_price_pkr,
         is_admin=is_admin(user),
+        application_count=application_count,
     )
 
 

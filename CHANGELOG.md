@@ -1,5 +1,10 @@
 # Changelog
 
+## M7 — Applications and shortlisting
+- Added consent-based applications to approved direct jobs, sharing candidate email, short note, and recognized CV skills while keeping CV files and extracted text private.
+- Added employer-owned applicant review ranked by explainable match score, matched/missing skills, status updates, and email reply links.
+- Added an applications migration and coverage for consent, scoring, ownership, duplicates, and direct-job eligibility.
+
 ## M6 — SEO and content
 - Added gated skill/city landing pages with breadcrumb schema, sanitized Markdown career guides, Open Graph/Twitter metadata, and blog last-modified sitemap entries.
 - Added opt-in AdSense units for listings and blog pages with configuration-gated CSP sources.

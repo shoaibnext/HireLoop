@@ -1,5 +1,7 @@
 # Decisions
 
+- M7 applications store only a candidate's explicitly shared email, short note, and normalized CV skills; the source CV and extracted CV text stay in the anonymous CV profile. Applicant order reuses the deterministic M4 score, with matched and missing skills displayed to explain it.
+
 - M1 uses a small `os.getenv` settings module to keep configuration dependency-free.
 - Production schema changes run through Alembic. The application does not call `create_all` during startup; tests create an isolated temporary schema.
 - Home and API pages use a fixed page size of 20, matching the supplied baseline contract.

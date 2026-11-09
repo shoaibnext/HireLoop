@@ -469,6 +469,7 @@ def job_detail(job_ref: str, request: Request, db: Session = Depends(get_db)):
             ),
             "contact_email": settings.contact_email,
             "match_score": cached_match.score if cached_match else None,
+            "application_submitted": request.query_params.get("application") == "sent",
         },
     )
 
@@ -693,12 +694,14 @@ def job_posting_ld(db: Session, job: Job) -> dict | None:
 
 
 from .alerts import router as alerts_router
+from .applications import router as applications_router
 from .cv import router as cv_router
 from .employer import router as employer_router
 
 app.include_router(employer_router)
 app.include_router(cv_router)
 app.include_router(alerts_router)
+app.include_router(applications_router)
 
 
 def _cv_session_hash(request: Request) -> str | None:

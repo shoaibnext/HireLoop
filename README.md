@@ -62,6 +62,10 @@ Set the optional `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in the environment to
 
 Candidates can subscribe at `/alerts` with an email, recognized skills, and remote/local/location preferences. A subscription remains pending until its inbox confirmation link is used. Confirmed subscribers can update preferences from any digest; the unsubscribe link acts immediately. Configure `EMAIL_API_KEY` (Resend API key), `EMAIL_FROM` (a verified sender), `SITE_URL`, and `SECRET_KEY` in the deployment environment. Add `EMAIL_API_KEY` and `SECRET_KEY` as GitHub repository secrets, and `EMAIL_FROM`, `SITE_URL` as repository variables. The daily `alerts.yml` workflow runs `send_digests.py` at 04:00 UTC, after applying migrations; it can also be run manually with `python send_digests.py`.
 
+## Applications and shortlisting
+
+Candidates can upload a CV, then apply to approved direct HireLoop jobs. Applying requires explicit consent to share the candidate's email, short note, and recognized CV skills with that employer; the original CV and extracted CV text are not sent. Employers review applications at `/employer/applications`, ranked by HireLoop's deterministic M4 match score with matched and missing skills shown, set new/shortlisted/rejected status, and use the reply link to contact candidates by email. Apply the schema with `alembic upgrade head` before deploying this feature.
+
 ## SEO pages, blog, and AdSense
 
 Skill landing pages use `/jobs/skill/{skill}` for the curated skills linked from the home page. City pages use `/jobs/city/{city}` for the supported Pakistan cities. Both reuse the public job listing, and stay `noindex,follow` until at least ten eligible active jobs exist, including at least one approved direct job.

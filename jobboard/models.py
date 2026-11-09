@@ -200,6 +200,42 @@ class AlertSubscription(Base):
     last_digest_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class Application(Base):
+    __tablename__ = "applications"
+    __table_args__ = (
+        UniqueConstraint("job_id", "candidate_email", name="uq_applications_job_email"),
+        CheckConstraint(
+            "status IN ('new', 'shortlisted', 'rejected')",
+            name="ck_applications_status",
+        ),
+        CheckConstraint(
+            "match_score >= 0 AND match_score <= 100",
+            name="ck_applications_match_score",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    job_id: Mapped[int] = mapped_column(
+        ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    employer_id: Mapped[int] = mapped_column(
+        ForeignKey("employers.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    candidate_email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
+    candidate_note: Mapped[str] = mapped_column(Text, nullable=False)
+    shared_skills: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
+    match_score: Mapped[int] = mapped_column(Integer, nullable=False)
+    matched_skills: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    missing_skills: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    status: Mapped[str] = mapped_column(String(12), nullable=False, default="new", index=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+
+
 engine = create_engine(
     settings.database_url,
     connect_args={"check_same_thread": False}

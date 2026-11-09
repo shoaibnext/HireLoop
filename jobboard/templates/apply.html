@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Apply: {{ job.title }} | HireLoop{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow">
+  <p><a class="text-indigo-800 underline" href="/jobs/{{ job.id }}">Back to job</a></p>
+  <h1 class="mt-3 text-3xl font-bold">Apply for {{ job.title }}</h1>
+  <p class="mt-2">{{ job.company }} · {{ job.location }}</p>
+  {% if error %}<p role="alert" class="mt-4 rounded bg-red-50 p-3">{{ error }}</p>{% endif %}
+  {% if not profile %}
+  <p class="mt-5">Upload a CV before applying. HireLoop will share only recognized skills from your CV, not the uploaded file or extracted CV text.</p>
+  <a class="mt-4 inline-flex min-h-11 items-center rounded bg-indigo-700 px-4 text-white" href="/upload-cv">Upload your CV</a>
+  {% else %}
+  <form method="post" class="mt-5 grid gap-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="email" class="font-medium">Your email address</label>
+    <input id="email" type="email" name="email" autocomplete="email" required maxlength="320" value="{{ values.email|default('') }}" class="min-h-11 rounded border p-3">
+    <label for="note" class="font-medium">Short note to the employer</label>
+    <textarea id="note" name="note" required maxlength="1000" rows="5" aria-describedby="note-help" class="rounded border p-3">{{ values.note|default('') }}</textarea>
+    <p id="note-help" class="text-sm">Up to 1,000 characters.</p>
+    <section class="rounded-xl bg-slate-50 p-4"><h2 class="font-semibold">Skills shared with this employer</h2><p class="mt-1">{{ profile.skills or 'No recognized skills found' }}</p><p class="mt-2 text-sm">Your original CV file and extracted CV text are not sent.</p></section>
+    <label class="flex min-h-11 items-start gap-2"><input class="mt-1" type="checkbox" name="share_skills" value="1" required {% if values.share_skills %}checked{% endif %}><span>I agree to share my email address, short note, and recognized CV skills with {{ job.company }} for this application.</span></label>
+    <button class="min-h-11 rounded bg-indigo-700 px-4 text-white">Send application</button>
+  </form>
+  {% endif %}
+</section>
+{% endblock %}
