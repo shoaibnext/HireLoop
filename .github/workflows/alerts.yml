@@ -1,0 +1,26 @@
+name: Daily job alerts
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+jobs:
+  send-digests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - run: alembic upgrade head
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      - run: python send_digests.py
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          EMAIL_API_KEY: ${{ secrets.EMAIL_API_KEY }}
+          EMAIL_FROM: ${{ vars.EMAIL_FROM }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          SECRET_KEY: ${{ secrets.SECRET_KEY }}

@@ -171,6 +171,35 @@ class MatchCache(Base):
     computed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
 
+class AlertSubscription(Base):
+    __tablename__ = "alert_subscriptions"
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('pending', 'confirmed', 'unsubscribed')",
+            name="ck_alert_subscriptions_status",
+        ),
+        CheckConstraint(
+            "work_mode IN ('any', 'remote', 'local')",
+            name="ck_alert_subscriptions_work_mode",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(320), nullable=False, unique=True, index=True)
+    skills: Mapped[str] = mapped_column(String(2000), nullable=False)
+    location: Mapped[str] = mapped_column(String(100), nullable=False, default="")
+    work_mode: Mapped[str] = mapped_column(String(10), nullable=False, default="any")
+    status: Mapped[str] = mapped_column(String(12), nullable=False, default="pending", index=True)
+    confirm_token_hash: Mapped[str | None] = mapped_column(String(64), unique=True, index=True)
+    confirm_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    unsubscribe_salt: Mapped[str] = mapped_column(String(32), nullable=False)
+    unsubscribe_token_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC))
+    confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    unsubscribed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_digest_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
 engine = create_engine(
     settings.database_url,
     connect_args={"check_same_thread": False}

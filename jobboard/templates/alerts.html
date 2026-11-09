@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Daily job alerts | HireLoop{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow">
+  <h1 class="mb-3 text-3xl font-bold">Daily job alerts</h1>
+  <p class="mb-4">{{ message }}</p>
+  {% if error %}<p role="alert" class="mb-4 rounded bg-red-50 p-3">{{ error }}</p>{% endif %}
+  {% if preferences_token %}<form method="post" action="/alerts/preferences/{{ preferences_token }}" class="grid gap-4">
+  {% else %}<form method="post" action="/alerts" class="grid gap-4">{% endif %}
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    {% if preferences_token %}<p><span class="font-medium">Email:</span> {{ values.email }}</p>{% else %}<label for="email" class="font-medium">Email address</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="320" value="{{ values.email|default('') }}" class="min-h-11 rounded border p-3">{% endif %}
+    <label for="skills" class="font-medium">Skills to match</label>
+    <input id="skills" name="skills" required maxlength="2000" value="{{ values.skills|default('') }}" aria-describedby="skills-help" class="min-h-11 rounded border p-3">
+    <p id="skills-help" class="text-sm">Use recognized skills such as Python, React, AWS, or PostgreSQL.</p>
+    <label for="work_mode" class="font-medium">Job location</label>
+    <select id="work_mode" name="work_mode" class="min-h-11 rounded border p-3">
+      {% for mode, label in [('any', 'Any location'), ('remote', 'Remote only'), ('local', 'Local / on-site only')] %}<option value="{{ mode }}" {% if values.work_mode|default('any') == mode %}selected{% endif %}>{{ label }}</option>{% endfor %}
+    </select>
+    <label for="location" class="font-medium">Preferred city or region <span class="font-normal">(optional)</span></label>
+    <input id="location" name="location" maxlength="100" value="{{ values.location|default('') }}" class="min-h-11 rounded border p-3">
+    <button class="min-h-11 rounded bg-indigo-700 px-4 text-white">{% if preferences_token %}Save preferences{% else %}Subscribe to alerts{% endif %}</button>
+  </form>
+  <p class="mt-4 text-sm">We send one daily email when new active jobs match your skills. Confirm your email before alerts begin. Every email includes an unsubscribe link.</p>
+</section>
+{% endblock %}

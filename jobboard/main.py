@@ -256,7 +256,7 @@ def static_page(page_name: str, request: Request):
         "contact": ("Contact", f"Contact us at {settings.contact_email}."),
         "privacy": (
             "Privacy",
-            "When you upload a CV, we store only extracted text and recognized skills, never the original file. CV data is linked to your signed anonymous session, is automatically deleted after 30 days, and can be deleted immediately with Delete my CV. We do not share it with employers unless you explicitly choose to apply. If optional match explanations are enabled, Anthropic receives only the job title and matched or missing skill names, never your CV text.",
+            "When you upload a CV, we store only extracted text and recognized skills, never the original file. CV data is linked to your signed anonymous session, is automatically deleted after 30 days, and can be deleted immediately with Delete my CV. We do not share it with employers unless you explicitly choose to apply. If optional match explanations are enabled, Anthropic receives only the job title and matched or missing skill names, never your CV text. Email alert addresses and preferences are used only to send the alerts you requested; every email includes an unsubscribe link that immediately deletes that subscription and its preferences.",
         ),
     }
     if page_name not in pages:
@@ -412,11 +412,13 @@ def job_posting_ld(db: Session, job: Job) -> dict | None:
     return data
 
 
+from .alerts import router as alerts_router
 from .cv import router as cv_router
 from .employer import router as employer_router
 
 app.include_router(employer_router)
 app.include_router(cv_router)
+app.include_router(alerts_router)
 
 
 def _cv_session_hash(request: Request) -> str | None:

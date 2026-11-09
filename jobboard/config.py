@@ -22,6 +22,8 @@ class Settings:
     ads_enabled: bool = os.getenv("ADS_ENABLED", "0") == "1"
     anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
     anthropic_model: str = os.getenv("ANTHROPIC_MODEL", "claude-haiku-5-5")
+    email_api_key: str = os.getenv("EMAIL_API_KEY", "")
+    email_from: str = os.getenv("EMAIL_FROM", "")
 
     def __post_init__(self):
         if self.site_url.startswith("https://") and (

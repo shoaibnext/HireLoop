@@ -1,5 +1,9 @@
 # Changelog
 
+## M5 — Email alerts
+- Added double opt-in subscriptions, skill and location preferences, daily matching digests, preference management, and immediate unsubscribe.
+- Added Resend email delivery configuration, a daily digest workflow, migration, and mocked alert tests.
+
 ## M4 — CV upload and matching
 - Added anonymous PDF/DOCX CV upload, in-memory extraction, skill-based match scoring, optional privacy-minimized Claude explanations, and immediate CV deletion.
 - Added cached match results, CV expiry cleanup command and daily workflow, migration, and privacy documentation.
