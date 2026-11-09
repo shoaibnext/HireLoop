@@ -1,5 +1,9 @@
 # Changelog
 
+## M8 — Operations
+- Added an admin-only operations page with jobs by source, active job counts, new employers, and application totals.
+- Added optional Sentry error reporting, database-backed uptime check coverage, and documented SQLite/Postgres backup and restore steps.
+
 ## M7 — Applications and shortlisting
 - Added consent-based applications to approved direct jobs, sharing candidate email, short note, and recognized CV skills while keeping CV files and extracted text private.
 - Added employer-owned applicant review ranked by explainable match score, matched/missing skills, status updates, and email reply links.

@@ -25,6 +25,27 @@ ruff check .
 pytest
 ```
 
+## Operations and backups
+
+The admin-only `/admin/stats` page summarizes job totals and active jobs by source, employer totals/new employers over 30 days, and application totals/recent applications. `/health` executes a database query and returns HTTP 503 when the database is unavailable; point an uptime monitor at `https://your-domain/health` and alert on any non-2xx response. Optionally set `SENTRY_DSN` to enable Sentry error reporting. HireLoop configures Sentry without default PII collection or performance tracing; leave the value empty to disable it.
+
+Back up the production database regularly and store backups encrypted with access limited to operators. Backups contain applicant email addresses and notes plus retained CV profile text, so apply the same privacy and retention controls as the database. For local SQLite, create a backup directory and use SQLite's online backup API (safe while the app is running):
+
+```bash
+python -c "from pathlib import Path; Path('backups').mkdir(exist_ok=True)"
+python -c "import sqlite3; source=sqlite3.connect('hireloop.db'); target=sqlite3.connect('backups/hireloop-YYYYMMDD.db'); source.backup(target); target.close(); source.close()"
+```
+
+For Postgres, install the PostgreSQL client tools and use the provider's database URL stored in `DATABASE_URL`; do not commit or print that credential. In PowerShell:
+
+```powershell
+New-Item -ItemType Directory -Force backups
+pg_dump --format=custom --no-owner --file=backups/hireloop-YYYYMMDD.dump $env:DATABASE_URL
+pg_restore --clean --if-exists --no-owner --dbname=$env:DATABASE_URL backups/hireloop-YYYYMMDD.dump
+```
+
+Restoring replaces database objects; restore into a separate database first when validating a backup. Periodically verify that a backup can be restored and keep off-site copies according to your retention policy.
+
 ## Deploy on Render
 
 Create a Render Postgres database and web service from this repository. Set `DATABASE_URL`, `SITE_URL`, and `CONTACT_EMAIL` in the service environment. `render.yaml` runs migrations at build and starts Uvicorn.

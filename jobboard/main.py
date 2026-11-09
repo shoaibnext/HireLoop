@@ -65,6 +65,16 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="HireLoop", lifespan=lifespan)
+if settings.sentry_dsn:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+
+    sentry_sdk.init(
+        dsn=settings.sentry_dsn,
+        integrations=[FastApiIntegration()],
+        send_default_pii=False,
+        traces_sample_rate=0.0,
+    )
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.secret_key,

@@ -14,6 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from passlib.context import CryptContext
+from sqlalchemy import case, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -466,6 +467,47 @@ def admin_jobs_page(request: Request, db: Session = Depends(get_db)):
     )
 
 
+@router.get("/admin/stats", response_class=HTMLResponse)
+def admin_stats_page(request: Request, db: Session = Depends(get_db)):
+    user = current_user(request, db)
+    if not user or not is_admin(user):
+        raise HTTPException(status_code=403, detail="Admin access required")
+
+    since = datetime.now(UTC) - timedelta(days=30)
+    jobs_by_source = [
+        {"source": source, "total": total, "active": active or 0}
+        for source, total, active in db.query(
+            Job.source,
+            func.count(Job.id),
+            func.sum(case((Job.is_active.is_(True), 1), else_=0)),
+        )
+        .group_by(Job.source)
+        .order_by(Job.source)
+        .all()
+    ]
+    employer_total = db.query(func.count(Employer.id)).scalar() or 0
+    employers_30d = (
+        db.query(func.count(Employer.id))
+        .filter(Employer.created_at >= since)
+        .scalar()
+        or 0
+    )
+    application_total = db.query(func.count(Application.id)).scalar() or 0
+    applications_30d = (
+        db.query(func.count(Application.id))
+        .filter(Application.created_at >= since)
+        .scalar()
+        or 0
+    )
+    return _page(
+        request,
+        "admin_stats.html",
+        jobs_by_source=jobs_by_source,
+        employer_total=employer_total,
+        employers_30d=employers_30d,
+        application_total=application_total,
+        applications_30d=applications_30d,
+    )
 @router.post("/admin/jobs/{job_id}/moderate")
 @limiter.limit("30/minute")
 async def moderate_job(job_id: int, request: Request, db: Session = Depends(get_db)):

@@ -9,7 +9,7 @@
     {% if job.featured_requested and not job.is_paid %}<p class="mt-2">Featured listing requested. Payment instructions: {{ payment_instructions }}</p>{% endif %}
     <div class="mt-3 flex flex-wrap gap-3">{% if job.status not in ['closed','expired'] %}<form method="post" action="/employer/jobs/{{ job.id }}/close"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="min-h-11 rounded border px-4">Close job</button></form>{% else %}<form method="post" action="/employer/jobs/{{ job.id }}/renew"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="min-h-11 rounded border px-4">Renew for 30 days</button></form>{% endif %}</div>
   </article>{% endfor %}</div>{% else %}<p class="mt-3">You have not posted any jobs yet.</p>{% endif %}
-  {% if is_admin %}<p class="mt-6"><a class="text-indigo-800 underline" href="/admin/jobs">Open job moderation</a></p>{% endif %}
+  {% if is_admin %}<p class="mt-6"><a class="text-indigo-800 underline" href="/admin/jobs">Open job moderation</a> · <a class="text-indigo-800 underline" href="/admin/stats">Operations stats</a></p>{% endif %}
   <p class="mt-6"><a class="text-indigo-800 underline" href="/employer/applications">Review applications ({{ application_count }})</a></p>
   <form class="mt-6" method="post" action="/logout"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="min-h-11 rounded border px-4">Sign out</button></form>
 </section>

@@ -1,5 +1,7 @@
 # Decisions
 
+- M8 keeps operational totals behind the existing admin email allowlist. “New” employers and applications means records created during the last 30 days; totals are lifetime counts. Sentry is opt-in through `SENTRY_DSN`, with PII collection and tracing disabled by default. Backups must be encrypted and access-controlled because they contain CV profile and application data.
+
 - M7 applications store only a candidate's explicitly shared email, short note, and normalized CV skills; the source CV and extracted CV text stay in the anonymous CV profile. Applicant order reuses the deterministic M4 score, with matched and missing skills displayed to explain it.
 
 - M1 uses a small `os.getenv` settings module to keep configuration dependency-free.
