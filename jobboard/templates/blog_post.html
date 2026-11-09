@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }} | HireLoop{% endblock %}
+{% block meta_description %}{{ post.description }}{% endblock %}
+{% block og_title %}{{ post.title }} | HireLoop{% endblock %}
+{% block og_type %}article{% endblock %}
+{% block content %}
+<article class="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow">
+  <nav aria-label="Breadcrumb" class="mb-4 text-sm"><a class="text-indigo-800 underline" href="/blog">Career guides</a> / {{ post.title }}</nav>
+  <h1 class="text-3xl font-bold">{{ post.title }}</h1>
+  <p class="mt-2 text-sm text-slate-700"><time datetime="{{ post.published.isoformat() }}">Published {{ post.published.strftime('%B %d, %Y') }}</time>{% if post.updated > post.published %} · Updated {{ post.updated.strftime('%B %d, %Y') }}{% endif %}</p>
+  {% if ads_enabled %}<div class="my-6">{% include "_ad_unit.html" %}</div>{% endif %}
+  <div class="prose mt-6 max-w-none">{{ post.html|safe }}</div>
+</article>
+{% endblock %}

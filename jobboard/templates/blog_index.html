@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Career guides for technology roles | HireLoop{% endblock %}
+{% block meta_description %}Practical guides for finding technology roles and evaluating job offers.{% endblock %}
+{% block og_title %}Career guides | HireLoop{% endblock %}
+{% block og_type %}website{% endblock %}
+{% block content %}
+<h1 class="mb-3 text-3xl font-bold">Career guides</h1>
+<p class="mb-6">Practical notes for searching technology roles and comparing opportunities.</p>
+{% if ads_enabled %}{% include "_ad_unit.html" %}{% endif %}
+<section aria-label="Career guides" class="grid gap-4 md:grid-cols-2">
+  {% for post in posts %}<article class="rounded-2xl bg-white p-5 shadow"><p class="text-sm text-slate-700"><time datetime="{{ post.published.isoformat() }}">{{ post.published.strftime('%B %d, %Y') }}</time></p><h2 class="mt-2 text-xl font-semibold"><a class="text-indigo-800 underline" href="/blog/{{ post.slug }}">{{ post.title }}</a></h2><p class="mt-2">{{ post.description }}</p></article>{% else %}<p>No articles are published yet.</p>{% endfor %}
+</section>
+{% endblock %}

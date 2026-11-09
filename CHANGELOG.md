@@ -1,5 +1,9 @@
 # Changelog
 
+## M6 — SEO and content
+- Added gated skill/city landing pages with breadcrumb schema, sanitized Markdown career guides, Open Graph/Twitter metadata, and blog last-modified sitemap entries.
+- Added opt-in AdSense units for listings and blog pages with configuration-gated CSP sources.
+
 ## M5 — Email alerts
 - Added double opt-in subscriptions, skill and location preferences, daily matching digests, preference management, and immediate unsubscribe.
 - Added Resend email delivery configuration, a daily digest workflow, migration, and mocked alert tests.

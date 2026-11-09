@@ -21,3 +21,7 @@ services:
         value: "5000"
       - key: ADS_ENABLED
         value: "0"
+      - key: ADSENSE_CLIENT
+        sync: false
+      - key: ADSENSE_SLOT
+        sync: false

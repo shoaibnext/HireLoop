@@ -20,6 +20,8 @@ class Settings:
         f"Contact {os.getenv('CONTACT_EMAIL', 'hello@example.com')} for payment instructions.",
     )
     ads_enabled: bool = os.getenv("ADS_ENABLED", "0") == "1"
+    adsense_client: str = os.getenv("ADSENSE_CLIENT", "")
+    adsense_slot: str = os.getenv("ADSENSE_SLOT", "")
     anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
     anthropic_model: str = os.getenv("ANTHROPIC_MODEL", "claude-haiku-5-5")
     email_api_key: str = os.getenv("EMAIL_API_KEY", "")

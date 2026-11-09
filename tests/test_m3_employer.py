@@ -104,7 +104,9 @@ def test_employer_can_post_then_admin_approve_and_feature(
     assert detail.status_code == 200
     assert "application/ld+json" in detail.text
     structured = re.search(
-        r'<script type="application/ld\+json">(.*?)</script>', detail.text, re.DOTALL
+        r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
+        detail.text,
+        re.DOTALL,
     )
     data = json.loads(structured.group(1))
     assert data["@type"] == "JobPosting"

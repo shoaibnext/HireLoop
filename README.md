@@ -61,3 +61,11 @@ Set the optional `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in the environment to
 ## Daily job alerts
 
 Candidates can subscribe at `/alerts` with an email, recognized skills, and remote/local/location preferences. A subscription remains pending until its inbox confirmation link is used. Confirmed subscribers can update preferences from any digest; the unsubscribe link acts immediately. Configure `EMAIL_API_KEY` (Resend API key), `EMAIL_FROM` (a verified sender), `SITE_URL`, and `SECRET_KEY` in the deployment environment. Add `EMAIL_API_KEY` and `SECRET_KEY` as GitHub repository secrets, and `EMAIL_FROM`, `SITE_URL` as repository variables. The daily `alerts.yml` workflow runs `send_digests.py` at 04:00 UTC, after applying migrations; it can also be run manually with `python send_digests.py`.
+
+## SEO pages, blog, and AdSense
+
+Skill landing pages use `/jobs/skill/{skill}` for the curated skills linked from the home page. City pages use `/jobs/city/{city}` for the supported Pakistan cities. Both reuse the public job listing, and stay `noindex,follow` until at least ten eligible active jobs exist, including at least one approved direct job.
+
+Publish Markdown articles in `content/blog/` with a filename slug and this front matter: `title`, `description`, `published` (`YYYY-MM-DD`), and optional `updated` (`YYYY-MM-DD`). Blog pages are sanitized before rendering, expose canonical/Open Graph/Twitter metadata, and article `updated` dates appear as sitemap `lastmod` values. The sitemap also includes the blog and qualifying skill/city pages.
+
+AdSense units are rendered only on job-listing and blog pages when `ADS_ENABLED=1` and both `ADSENSE_CLIENT` and `ADSENSE_SLOT` are configured. Keep ads disabled until your AdSense account and site are approved and the publisher/slot values are available. The CSP adds AdSense script, image, frame, and connection sources only when the ad settings are active.
