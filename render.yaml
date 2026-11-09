@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: hireloop
+    runtime: python
+    buildCommand: pip install -r requirements.txt && alembic upgrade head
+    startCommand: uvicorn jobboard.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SITE_URL
+        sync: false
+      - key: CONTACT_EMAIL
+        sync: false
+      - key: ADS_ENABLED
+        value: "0"
