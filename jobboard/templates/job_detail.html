@@ -1,1 +1,15 @@
-{% extends "base.html" %}{% block title %}{{ job.title }} — HireLoop{% endblock %}{% block content %}<article class="rounded-2xl bg-white p-6 shadow"><h1 class="text-3xl font-bold">{{ job.title }}</h1><p>{{ job.company }} · {{ job.location }}</p>{% if job.source == 'remotive' %}<p>Listed via <a href="{{ job.source_url }}" rel="nofollow">Remotive</a>.</p>{% elif job.source == 'remoteok' %}<p>Listed via <a href="{{ job.source_url }}">RemoteOK</a>.</p>{% endif %}<div class="prose mt-6">{{ description|safe }}</div>{% if job.source_url %}<a class="mt-6 inline-block" href="{{ job.source_url }}">View and apply on source site</a>{% endif %}</article>{% endblock %}
+{% extends "base.html" %}
+{% block title %}{{ job.title }} — HireLoop{% endblock %}
+{% block content %}
+{% if job_posting_ld %}<script type="application/ld+json">{{ job_posting_ld|tojson }}</script>{% endif %}
+<article class="rounded-2xl bg-white p-6 shadow">
+  {% if featured %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-blue-50 px-3 font-semibold">Featured</p>{% endif %}
+  <h1 class="text-3xl font-bold">{{ job.title }}</h1>
+  <p>{{ job.company }} · {{ job.location }}</p>
+  {% if job.source == 'remotive' %}<p>Listed via <a href="{{ job.source_url }}" rel="nofollow">Remotive</a>.</p>{% elif job.source == 'remoteok' %}<p>Listed via <a href="{{ job.source_url }}">RemoteOK</a>.</p>{% endif %}
+  {% if job.source == 'direct' and job.salary_currency and (job.salary_min is not none or job.salary_max is not none) %}<p class="mt-2">{{ job.salary_currency }}{% if job.salary_min is not none %} {{ "{:,.0f}".format(job.salary_min) }}{% endif %}{% if job.salary_min is not none and job.salary_max is not none %} to{% endif %}{% if job.salary_max is not none %} {{ "{:,.0f}".format(job.salary_max) }}{% endif %} / month</p>{% elif job.salary %}<p class="mt-2">{{ job.salary }}</p>{% endif %}
+  <div class="prose mt-6">{{ description|safe }}</div>
+  {% if job.source == 'direct' %}{% if job.apply_url %}<a class="mt-6 inline-flex min-h-11 items-center rounded bg-indigo-700 px-4 text-white" href="{{ job.apply_url }}" rel="nofollow">Apply for this job</a>{% elif job.apply_email %}<a class="mt-6 inline-flex min-h-11 items-center rounded bg-indigo-700 px-4 text-white" href="mailto:{{ job.apply_email }}">Apply by email</a>{% endif %}{% elif job.source_url %}<a class="mt-6 inline-block" href="{{ job.source_url }}">View and apply on source site</a>{% endif %}
+  <p class="mt-5"><a class="text-indigo-800 underline" href="mailto:{{ contact_email }}?subject=Report%20job%20{{ job.id }}">Report this job</a></p>
+</article>
+{% endblock %}

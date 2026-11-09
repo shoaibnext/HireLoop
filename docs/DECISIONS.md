@@ -7,3 +7,6 @@
 - M2 stores canonical skills as comma-separated names from a curated in-code alias dictionary. A lone “R” is not treated as a skill; phrases such as “R language” are, to avoid common false positives.
 - Cross-source deduplication is limited to the two integrated feeds so an aggregated listing cannot deactivate a future direct employer post.
 - Active aggregated listings are deduplicated by normalized company/title, retaining the earliest posted row; no job rows are deleted.
+- M3 requires all newly submitted direct posts to remain pending until admin approval, including later posts from an existing employer.
+- Featured placement is activated only after an admin records payment; featured duration and expiry are fixed at 30 days. The amount and payment instructions are configurable without wiring a payment gateway.
+- Remote JobPosting markup uses Pakistan as the applicant location requirement because this product's direct roles target candidates in Pakistan; local direct roles use the employer-entered location with country code PK.

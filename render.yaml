@@ -11,5 +11,13 @@ services:
         sync: false
       - key: CONTACT_EMAIL
         sync: false
+      - key: SECRET_KEY
+        sync: false
+      - key: ADMIN_EMAILS
+        sync: false
+      - key: PAYMENT_INSTRUCTIONS
+        sync: false
+      - key: FEATURED_PRICE_PKR
+        value: "5000"
       - key: ADS_ENABLED
         value: "0"

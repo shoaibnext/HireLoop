@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — HireLoop{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-3xl rounded-2xl bg-white p-6 shadow">
+  <h1 class="text-3xl font-bold">{{ title }}</h1>
+  <p class="mt-2">Posting for {{ company }}. New posts go live after admin approval.</p>
+  <form method="post" action="{{ action }}" class="mt-6 grid gap-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Job title<input class="mt-1 block min-h-11 w-full rounded border p-3" name="title" maxlength="255" value="{{ values.get('title', job.title if job else '') }}" required>{% if errors.get('title') %}<span class="text-red-800">{{ errors.title }}</span>{% endif %}</label>
+    <label>Location<input class="mt-1 block min-h-11 w-full rounded border p-3" name="location" maxlength="255" value="{{ values.get('location', job.location if job else '') }}" required>{% if errors.get('location') %}<span class="text-red-800">{{ errors.location }}</span>{% endif %}</label>
+    <label>Employment type<select class="mt-1 block min-h-11 w-full rounded border p-3" name="job_type" required>{% for value, label in [('full-time','Full-time'),('part-time','Part-time'),('contract','Contract'),('freelance','Freelance'),('internship','Internship')] %}<option value="{{ value }}" {% if values.get('job_type', job.job_type if job else 'full-time') == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>{% if errors.get('job_type') %}<span class="text-red-800">{{ errors.job_type }}</span>{% endif %}</label>
+    <label class="flex min-h-11 items-center gap-2"><input type="checkbox" name="remote" value="1" {% if values.get('remote', job.is_remote if job else false) %}checked{% endif %}>Remote role</label>
+    <fieldset class="grid gap-2"><legend class="font-medium">Monthly salary range <span class="text-sm">(optional)</span></legend><div class="grid gap-3 sm:grid-cols-3"><label>Minimum<input class="mt-1 block min-h-11 w-full rounded border p-3" type="number" min="0" step="0.01" name="salary_min" value="{{ values.get('salary_min', job.salary_min if job and job.salary_min is not none else '') }}"></label><label>Maximum<input class="mt-1 block min-h-11 w-full rounded border p-3" type="number" min="0" step="0.01" name="salary_max" value="{{ values.get('salary_max', job.salary_max if job and job.salary_max is not none else '') }}"></label><label>Currency<select class="mt-1 block min-h-11 w-full rounded border p-3" name="salary_currency"><option value="">Select</option>{% for currency in ['PKR','USD'] %}<option value="{{ currency }}" {% if values.get('salary_currency', job.salary_currency if job else '') == currency %}selected{% endif %}>{{ currency }}</option>{% endfor %}</select></label></div>{% if errors.get('salary') %}<span class="text-red-800">{{ errors.salary }}</span>{% endif %}{% if errors.get('salary_currency') %}<span class="text-red-800">{{ errors.salary_currency }}</span>{% endif %}</fieldset>
+    <label>Job description<textarea class="mt-1 block min-h-48 w-full rounded border p-3" name="description" maxlength="50000" required>{{ values.get('description', job.description if job else '') }}</textarea><span class="text-sm">Basic formatting is supported; unsafe markup is removed.</span>{% if errors.get('description') %}<span class="text-red-800">{{ errors.description }}</span>{% endif %}</label>
+    <fieldset class="grid gap-2"><legend class="font-medium">Application details</legend><label>Apply URL<input class="mt-1 block min-h-11 w-full rounded border p-3" type="url" name="apply_url" value="{{ values.get('apply_url', job.apply_url if job else '') }}"></label><label>Or apply email<input class="mt-1 block min-h-11 w-full rounded border p-3" type="email" name="apply_email" value="{{ values.get('apply_email', job.apply_email if job else '') }}"></label>{% if errors.get('apply') %}<span class="text-red-800">{{ errors.apply }}</span>{% endif %}{% if errors.get('apply_url') %}<span class="text-red-800">{{ errors.apply_url }}</span>{% endif %}{% if errors.get('apply_email') %}<span class="text-red-800">{{ errors.apply_email }}</span>{% endif %}</fieldset>
+    <label class="flex min-h-11 items-center gap-2"><input type="checkbox" name="featured_requested" value="1" {% if values.get('featured_requested', job.featured_requested if job else false) %}checked{% endif %}>Request a featured listing for PKR {{ "{:,.0f}".format(pricing) }} / 30 days</label>
+    {% if values.get('featured_requested', job.featured_requested if job else false) %}<p class="rounded bg-blue-50 p-3">Payment instructions: {{ payment_instructions }}</p>{% endif %}
+    <button class="min-h-11 rounded bg-indigo-700 px-4 text-white">{{ 'Save changes' if job else 'Submit for approval' }}</button>
+  </form>
+  <aside class="mt-8 rounded-xl border bg-blue-50 p-5" aria-live="polite" aria-label="Job preview"><h2 class="text-xl font-semibold">Live preview</h2><p id="preview-company" class="mt-2">{{ company }}</p><h3 id="preview-title" class="mt-1 text-2xl font-bold">{{ job.title if job else 'Job title' }}</h3><p id="preview-location">{{ job.location if job else 'Location' }}</p><p id="preview-salary" class="mt-1"></p><div id="preview-description" class="mt-3 whitespace-pre-wrap">{{ job.description if job else 'Your job description will appear here.' }}</div></aside>
+</section>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const copyField = (field, target, fallback) => {
+    const input = document.querySelector(`[name="${field}"]`);
+    const output = document.getElementById(target);
+    if (!input || !output) return;
+    const update = () => { output.textContent = input.value.trim() || fallback; };
+    input.addEventListener('input', update);
+    update();
+  };
+  copyField('title', 'preview-title', 'Job title');
+  copyField('location', 'preview-location', 'Location');
+  copyField('description', 'preview-description', 'Your job description will appear here.');
+  const min = document.querySelector('[name="salary_min"]');
+  const max = document.querySelector('[name="salary_max"]');
+  const currency = document.querySelector('[name="salary_currency"]');
+  const salary = document.getElementById('preview-salary');
+  const updateSalary = () => {
+    const bounds = [min.value, max.value].filter(Boolean);
+    salary.textContent = bounds.length ? `${currency.value || ''} ${bounds.join(' to ')} / month` : '';
+  };
+  [min, max, currency].forEach(input => input.addEventListener('input', updateSalary));
+  updateSalary();
+});
+</script>
+{% endblock %}

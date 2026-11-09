@@ -31,6 +31,14 @@ Create a Render Postgres database and web service from this repository. Set `DAT
 
 GitHub Actions runs Ruff and pytest for pushes and pull requests. Never commit `.env` or production credentials.
 
+## Employer posting and moderation
+
+Employers can create an account at `/signup`, submit a job at `/post-job`, and manage their listings at `/employer/dashboard`. New submissions are pending until an admin approves them. Set `ADMIN_EMAILS` to a comma-separated list of admin account emails. Admins review jobs at `/admin/jobs` and can approve or reject posts, record manual payment notes, and activate or remove a featured listing.
+
+Basic posts are free and pending approval. Featured placement is configured with `FEATURED_PRICE_PKR` (default PKR 5,000 for 30 days). Set `PAYMENT_INSTRUCTIONS` to the actual bank transfer/JazzCash/Easypaisa instructions for your business; there is no payment gateway. Set a long random `SECRET_KEY` in production. Sessions use signed HttpOnly cookies with SameSite=Lax, and every form POST validates its CSRF token.
+
+Approved direct jobs are included in the sitemap and receive JobPosting JSON-LD. Aggregated jobs never receive JobPosting JSON-LD and retain their M2 noindex behavior. Before launch, validate a published direct job with Google's Rich Results Test; confirm required fields, salary details, and the remote/local location representation against the actual post.
+
 ## Ingestion
 
 Apply the latest schema before the first run:

@@ -326,7 +326,9 @@ def print_stats(session_factory: sessionmaker = SessionLocal) -> None:
         if not runs:
             print("No ingest runs recorded.")
             return
-        print("id | source | started_at | finished_at | status | fetched | new | updated | errors")
+        print(
+            "id | source | started_at | finished_at | status | fetched | new | updated | errors"
+        )
         for run in runs:
             print(
                 f"{run.id} | {run.source} | {run.started_at} | {run.finished_at or ''} | {run.status} | {run.fetched} | {run.new} | {run.updated} | {(run.errors or '').replace(chr(10), '; ')}"

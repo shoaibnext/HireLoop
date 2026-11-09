@@ -15,10 +15,12 @@
 <p class="mb-3">{{ total }} jobs</p>
 <section aria-label="Job listings" class="grid gap-3">
   {% for job in jobs %}<article class="rounded-2xl bg-white p-5 shadow">
+    {% if job.id in featured_ids %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-blue-50 px-3 font-semibold">Featured</p>{% endif %}
     <h2 class="text-xl font-semibold"><a href="/jobs/{{ job.id }}-{{ job.title|lower|replace(' ', '-') }}">{{ job.title }}</a></h2>
     <p>{{ job.company }} · {{ job.location }}{% if job.is_remote %} · Remote{% endif %}</p>
-    {% if job.salary %}<p>{{ job.salary }}</p>{% endif %}
+    {% if job.source == 'direct' and job.salary_currency and (job.salary_min is not none or job.salary_max is not none) %}<p>{{ job.salary_currency }}{% if job.salary_min is not none %} {{ "{:,.0f}".format(job.salary_min) }}{% endif %}{% if job.salary_min is not none and job.salary_max is not none %} to{% endif %}{% if job.salary_max is not none %} {{ "{:,.0f}".format(job.salary_max) }}{% endif %} / month</p>{% elif job.salary %}<p>{{ job.salary }}</p>{% endif %}
     {% if job.source == 'remotive' %}<p>via <a href="{{ job.source_url }}" rel="nofollow">Remotive</a></p>{% elif job.source == 'remoteok' %}<p>via <a href="{{ job.source_url }}">RemoteOK</a></p>{% endif %}
+    <a class="mt-2 inline-flex min-h-11 items-center text-indigo-800 underline" href="mailto:{{ contact_email }}?subject=Report%20job%20{{ job.id }}">Report this job</a>
   </article>{% else %}<p>No jobs found. Try a different search.</p>{% endfor %}
 </section>
 <nav aria-label="Pagination" class="mt-6 flex gap-4">{% if page > 1 %}<a href="?page={{ page - 1 }}">Previous</a>{% endif %}<span>Page {{ page }} of {{ pages }}</span>{% if page < pages %}<a href="?page={{ page + 1 }}">Next</a>{% endif %}</nav>

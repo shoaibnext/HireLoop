@@ -61,7 +61,9 @@ def test_ingest_twice_upserts_and_refreshes_last_seen(db_session):
 
 
 def _session_factory(session):
-    return sessionmaker(bind=session.get_bind(), autoflush=False, expire_on_commit=False)
+    return sessionmaker(
+        bind=session.get_bind(), autoflush=False, expire_on_commit=False
+    )
 
 
 def test_old_jobs_expire_during_ingest_and_inactive_listing_is_hidden(

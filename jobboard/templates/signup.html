@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Employer signup — HireLoop{% endblock %}
+{% block content %}
+<section class="mx-auto max-w-xl rounded-2xl bg-white p-6 shadow">
+  <h1 class="text-3xl font-bold">Create an employer account</h1>
+  <p class="mt-2">Post technology and AI roles for candidates in Pakistan.</p>
+  <form method="post" action="/signup" class="mt-6 grid gap-4">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Email address<input class="mt-1 block min-h-11 w-full rounded border p-3" type="email" name="email" autocomplete="email" value="{{ values.get('email', '') }}" required>{% if errors.get('email') %}<span class="text-red-800">{{ errors.email }}</span>{% endif %}</label>
+    <label>Password<input class="mt-1 block min-h-11 w-full rounded border p-3" type="password" name="password" autocomplete="new-password" minlength="10" required><span class="text-sm">Use 10–72 bytes.</span>{% if errors.get('password') %}<span class="text-red-800">{{ errors.password }}</span>{% endif %}</label>
+    <label>Company name<input class="mt-1 block min-h-11 w-full rounded border p-3" name="company_name" value="{{ values.get('company_name', '') }}" required>{% if errors.get('company_name') %}<span class="text-red-800">{{ errors.company_name }}</span>{% endif %}</label>
+    <label>Company website <span class="text-sm">(optional)</span><input class="mt-1 block min-h-11 w-full rounded border p-3" type="url" name="website" value="{{ values.get('website', '') }}">{% if errors.get('website') %}<span class="text-red-800">{{ errors.website }}</span>{% endif %}</label>
+    <button class="min-h-11 rounded bg-indigo-700 px-4 text-white">Create account</button>
+  </form>
+  <p class="mt-4">Already registered? <a class="text-indigo-800 underline" href="/login">Sign in</a>.</p>
+</section>
+{% endblock %}

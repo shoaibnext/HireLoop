@@ -3,17 +3,23 @@
 import logging
 import re
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 
 import nh3
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import func, or_, text
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from sqlalchemy import case, func, or_, text
 from sqlalchemy.orm import Session
+from starlette.middleware.sessions import SessionMiddleware
 
 from .config import settings
-from .models import Base, Job, SessionLocal, engine
+from .models import Base, Employer, Job, engine, get_db
+from .rate_limit import limiter
+from .skills import strip_html
 
 logging.basicConfig(
     level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s"
@@ -39,14 +45,6 @@ ALLOWED_TAGS = {
 }
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-
 def slugify(value: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", value.lower()).strip("-") or "job"
 
@@ -62,6 +60,15 @@ async def lifespan(_app: FastAPI):
 
 
 app = FastAPI(title="HireLoop", lifespan=lifespan)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.secret_key,
+    same_site="lax",
+    https_only=settings.site_url.startswith("https://"),
+    session_cookie="hireloop_session",
+)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 @app.middleware("http")
@@ -86,7 +93,12 @@ def job_filters(
     levels: list[str],
     has_salary: bool,
 ):
-    query = db.query(Job).filter(Job.is_active.is_(True))
+    now = datetime.now(UTC)
+    query = db.query(Job).filter(
+        Job.is_active.is_(True),
+        or_(Job.source != "direct", Job.status == "approved"),
+        or_(Job.expires_at.is_(None), Job.expires_at > now),
+    )
     if q:
         term = f"%{q.strip()}%"
         query = query.filter(
@@ -111,7 +123,13 @@ def job_filters(
         recognized_levels = {"junior", "mid", "senior", "unknown"}
         query = query.filter(Job.level.in_(set(levels) & recognized_levels))
     if has_salary:
-        query = query.filter(Job.salary != "")
+        query = query.filter(
+            or_(
+                Job.salary != "",
+                Job.salary_min.is_not(None),
+                Job.salary_max.is_not(None),
+            )
+        )
     return query
 
 
@@ -131,7 +149,10 @@ def home(
     query = job_filters(db, q, location, remote, types, levels, has_salary)
     total = query.count()
     jobs = (
-        query.order_by(func.coalesce(Job.posted_at, Job.created_at).desc())
+        query.order_by(
+            case((Job.featured_until > datetime.now(UTC), 0), else_=1),
+            func.coalesce(Job.posted_at, Job.created_at).desc(),
+        )
         .offset((page - 1) * 20)
         .limit(20)
         .all()
@@ -151,6 +172,13 @@ def home(
             "total": total,
             "pages": max(1, (total + 19) // 20),
             "noindex": filtered,
+            "featured_ids": {
+                job.id
+                for job in jobs
+                if job.featured_until
+                and _as_utc(job.featured_until) > datetime.now(UTC)
+            },
+            "contact_email": settings.contact_email,
         },
     )
 
@@ -168,6 +196,17 @@ def job_detail(job_ref: str, request: Request, db: Session = Depends(get_db)):
             "<!doctype html><title>Job no longer available</title><main><h1>Job no longer available</h1><p>This listing is no longer active. Browse current jobs to find another opportunity.</p><a href='/'>Browse jobs</a></main>",
             status_code=410,
         )
+    if (
+        job.source == "direct"
+        and job.expires_at
+        and _as_utc(job.expires_at) <= datetime.now(UTC)
+    ):
+        return HTMLResponse(
+            "<!doctype html><title>Job no longer available</title><main><h1>Job no longer available</h1><p>This listing has expired. Browse current jobs to find another opportunity.</p><a href='/'>Browse jobs</a></main>",
+            status_code=410,
+        )
+    if job.source == "direct" and (job.status != "approved"):
+        raise HTTPException(404)
     canonical = f"/jobs/{job.id}-{slugify(job.title)}"
     if job_ref != f"{job.id}-{slugify(job.title)}":
         return RedirectResponse(canonical, status_code=301)
@@ -181,6 +220,11 @@ def job_detail(job_ref: str, request: Request, db: Session = Depends(get_db)):
             "job": job,
             "description": safe_description,
             "noindex": job.source != "direct",
+            "job_posting_ld": job_posting_ld(db, job),
+            "featured": bool(
+                job.featured_until and _as_utc(job.featured_until) > datetime.now(UTC)
+            ),
+            "contact_email": settings.contact_email,
         },
     )
 
@@ -209,7 +253,6 @@ def static_page(page_name: str, request: Request):
 
 
 @app.get("/upload-cv", response_class=HTMLResponse)
-@app.get("/post-job", response_class=HTMLResponse)
 def coming_soon(request: Request):
     return templates.TemplateResponse(
         request=request,
@@ -224,7 +267,16 @@ def coming_soon(request: Request):
 
 @app.get("/sitemap.xml")
 def sitemap(db: Session = Depends(get_db)):
-    direct = db.query(Job).filter(Job.source == "direct", Job.is_active.is_(True)).all()
+    direct = (
+        db.query(Job)
+        .filter(
+            Job.source == "direct",
+            Job.is_active.is_(True),
+            Job.status == "approved",
+            or_(Job.expires_at.is_(None), Job.expires_at > datetime.now(UTC)),
+        )
+        .all()
+    )
     urls = [f"<url><loc>{settings.site_url}/</loc></url>"]
     urls += [
         f"<url><loc>{settings.site_url}/jobs/{j.id}-{slugify(j.title)}</loc></url>"
@@ -265,7 +317,10 @@ def api_jobs(
     query = job_filters(db, q, "", False, [], [], False)
     total = query.count()
     jobs = (
-        query.order_by(func.coalesce(Job.posted_at, Job.created_at).desc())
+        query.order_by(
+            case((Job.featured_until > datetime.now(UTC), 0), else_=1),
+            func.coalesce(Job.posted_at, Job.created_at).desc(),
+        )
         .offset((page - 1) * 20)
         .limit(20)
         .all()
@@ -292,3 +347,67 @@ async def not_found(_request: Request, _exc):
         "<!doctype html><title>Not found</title><h1>Page not found</h1><a href='/'>Back to jobs</a>",
         status_code=404,
     )
+
+
+def _as_utc(value: datetime) -> datetime:
+    return value.replace(tzinfo=UTC) if value.tzinfo is None else value.astimezone(UTC)
+
+
+def job_posting_ld(db: Session, job: Job) -> dict | None:
+    """Build JSON-LD only for approved direct jobs."""
+    if job.source != "direct" or not job.is_active or job.status != "approved":
+        return None
+    posted = _as_utc(job.posted_at or job.created_at)
+    data = {
+        "@context": "https://schema.org",
+        "@type": "JobPosting",
+        "title": job.title,
+        "description": strip_html(job.description),
+        "datePosted": posted.isoformat().replace("+00:00", "Z"),
+        "validThrough": _as_utc(job.expires_at).isoformat().replace("+00:00", "Z")
+        if job.expires_at
+        else None,
+        "employmentType": {
+            "full-time": "FULL_TIME",
+            "part-time": "PART_TIME",
+            "contract": "CONTRACTOR",
+            "freelance": "CONTRACTOR",
+            "internship": "INTERN",
+        }.get(job.job_type, "OTHER"),
+        "hiringOrganization": {"@type": "Organization", "name": job.company},
+    }
+    if job.is_remote:
+        data["jobLocationType"] = "TELECOMMUTE"
+        data["applicantLocationRequirements"] = {"@type": "Country", "name": "Pakistan"}
+    elif job.location:
+        data["jobLocation"] = {
+            "@type": "Place",
+            "address": {
+                "@type": "PostalAddress",
+                "addressLocality": job.location,
+                "addressCountry": "PK",
+            },
+        }
+    if job.salary_currency and (
+        job.salary_min is not None or job.salary_max is not None
+    ):
+        salary_value = {"@type": "QuantitativeValue", "unitText": "MONTH"}
+        if job.salary_min is not None:
+            salary_value["minValue"] = float(job.salary_min)
+        if job.salary_max is not None:
+            salary_value["maxValue"] = float(job.salary_max)
+        data["baseSalary"] = {
+            "@type": "MonetaryAmount",
+            "currency": job.salary_currency,
+            "value": salary_value,
+        }
+    if job.employer_id:
+        employer = db.get(Employer, job.employer_id)
+        if employer and employer.website:
+            data["hiringOrganization"]["sameAs"] = employer.website
+    return data
+
+
+from .employer import router as employer_router
+
+app.include_router(employer_router)
