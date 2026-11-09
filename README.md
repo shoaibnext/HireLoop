@@ -30,3 +30,16 @@ pytest
 Create a Render Postgres database and web service from this repository. Set `DATABASE_URL`, `SITE_URL`, and `CONTACT_EMAIL` in the service environment. `render.yaml` runs migrations at build and starts Uvicorn.
 
 GitHub Actions runs Ruff and pytest for pushes and pull requests. Never commit `.env` or production credentials.
+
+## Ingestion
+
+Apply the latest schema before the first run:
+
+```bash
+alembic upgrade head
+python ingest.py          # fetch, upsert, expire stale jobs, and deduplicate sources
+python ingest.py --dry-run # fetch and report counts without writing
+python ingest.py --stats   # show the latest ten per-source runs
+```
+
+The ingester uses only Remotive and RemoteOK's public JSON APIs. Remotive requests are limited to four per UTC day with a six-hour minimum gap; the daily Action runs at 03:00 UTC. Configure the GitHub repository secret `DATABASE_URL` with the same Postgres database used by the web service. The workflow runs `alembic upgrade head` before ingestion and can also be started with `workflow_dispatch`.

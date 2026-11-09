@@ -86,7 +86,7 @@ def job_filters(
     levels: list[str],
     has_salary: bool,
 ):
-    query = db.query(Job)
+    query = db.query(Job).filter(Job.is_active.is_(True))
     if q:
         term = f"%{q.strip()}%"
         query = query.filter(
@@ -95,6 +95,7 @@ def job_filters(
                 Job.company.ilike(term),
                 Job.tags.ilike(term),
                 Job.description.ilike(term),
+                Job.skills.ilike(term),
             )
         )
     if location:
@@ -107,16 +108,8 @@ def job_filters(
             normalized.add("freelance")
         query = query.filter(Job.job_type.in_(normalized))
     if levels:
-        clauses = []
-        for level in levels:
-            words = {
-                "junior": ["junior", "jr", "entry"],
-                "mid": ["mid", "intermediate"],
-                "senior": ["senior", "sr", "lead"],
-            }.get(level, [level])
-            clauses.extend(Job.title.ilike(f"%{word}%") for word in words)
-        if clauses:
-            query = query.filter(or_(*clauses))
+        recognized_levels = {"junior", "mid", "senior", "unknown"}
+        query = query.filter(Job.level.in_(set(levels) & recognized_levels))
     if has_salary:
         query = query.filter(Job.salary != "")
     return query
@@ -170,6 +163,11 @@ def job_detail(job_ref: str, request: Request, db: Session = Depends(get_db)):
     job = db.get(Job, int(match.group(1)))
     if not job:
         raise HTTPException(404)
+    if not job.is_active:
+        return HTMLResponse(
+            "<!doctype html><title>Job no longer available</title><main><h1>Job no longer available</h1><p>This listing is no longer active. Browse current jobs to find another opportunity.</p><a href='/'>Browse jobs</a></main>",
+            status_code=410,
+        )
     canonical = f"/jobs/{job.id}-{slugify(job.title)}"
     if job_ref != f"{job.id}-{slugify(job.title)}":
         return RedirectResponse(canonical, status_code=301)
@@ -226,7 +224,7 @@ def coming_soon(request: Request):
 
 @app.get("/sitemap.xml")
 def sitemap(db: Session = Depends(get_db)):
-    direct = db.query(Job).filter(Job.source == "direct").all()
+    direct = db.query(Job).filter(Job.source == "direct", Job.is_active.is_(True)).all()
     urls = [f"<url><loc>{settings.site_url}/</loc></url>"]
     urls += [
         f"<url><loc>{settings.site_url}/jobs/{j.id}-{slugify(j.title)}</loc></url>"

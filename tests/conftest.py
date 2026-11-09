@@ -48,6 +48,8 @@ def seed_jobs(db_session):
             salary="PKR 200k",
             job_type="full-time",
             tags="python",
+            level="senior",
+            skills="python,fastapi",
             description="<p>Build APIs</p>",
         ),
         Job(
@@ -60,6 +62,8 @@ def seed_jobs(db_session):
             job_type="contract",
             source_url="https://remoteok.com/jobs/1",
             description="<script>alert(1)</script><p>React role</p>",
+            level="junior",
+            skills="react,javascript",
         ),
         Job(
             source="remotive",
@@ -71,6 +75,8 @@ def seed_jobs(db_session):
             job_type="full-time",
             source_url="https://remotive.com/jobs/1",
             description="<p>SQL role</p>",
+            level="unknown",
+            skills="sql",
         ),
     ]
     db_session.add_all(jobs)
