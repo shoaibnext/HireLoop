@@ -19,8 +19,8 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session
 
 from .config import settings
-from .employer import csrf_token, verify_csrf
-from .models import CVProfile, Job, MatchCache, get_db
+from .employer import csrf_token, current_user, verify_csrf
+from .models import Application, CVProfile, Job, MatchCache, get_db
 from .rate_limit import limiter
 from .skills import detect_level, extract_skills
 
@@ -42,10 +42,18 @@ def _session_hash(request: Request, *, create: bool = False) -> str | None:
 
 
 def _profile(request: Request, db: Session) -> CVProfile | None:
+    user = current_user(request, db)
+    profile = None
+    if user and user.role == "candidate":
+        profile = db.query(CVProfile).filter_by(user_id=user.id).one_or_none()
     key = _session_hash(request)
-    if not key:
+    if profile is None and key:
+        profile = db.query(CVProfile).filter_by(session_key_hash=key).one_or_none()
+        if profile and user and user.role == "candidate" and profile.user_id is None:
+            profile.user_id = user.id
+            db.commit()
+    if not profile:
         return None
-    profile = db.query(CVProfile).filter_by(session_key_hash=key).one_or_none()
     if profile and _as_utc(profile.expires_at) <= datetime.now(UTC):
         db.query(MatchCache).filter_by(cv_id=profile.id).delete(synchronize_session=False)
         db.delete(profile)
@@ -90,7 +98,10 @@ def extract_docx_text(data: bytes) -> str:
 @router.get("/upload-cv", response_class=HTMLResponse)
 def upload_page(request: Request, db: Session = Depends(get_db)):
     profile = _profile(request, db)
-    return _render(request, "upload_cv.html", profile=profile, error=None, message=None)
+    preferences = request.session.get("cv_preferences", {})
+    return _render(request, "upload_cv.html", profile=profile, error=None, message=None,
+                   desired_location=preferences.get("location", ""),
+                   remote_only=preferences.get("remote_only", False))
 
 
 @router.post("/upload-cv", response_class=HTMLResponse)
@@ -132,10 +143,19 @@ async def upload_cv(request: Request, db: Session = Depends(get_db)):
         if not text:
             return _render(request, "upload_cv.html", profile=_profile(request, db), error="No readable text was found in this file.", message=None, desired_location=desired_location, remote_only=remote_only)
         key = _session_hash(request, create=True)
-        profile = db.query(CVProfile).filter_by(session_key_hash=key).one_or_none()
+        user = current_user(request, db)
+        profile = None
+        if user and user.role == "candidate":
+            profile = db.query(CVProfile).filter_by(user_id=user.id).one_or_none()
+        if profile is None:
+            profile = db.query(CVProfile).filter_by(session_key_hash=key).one_or_none()
         now = datetime.now(UTC)
         if not profile:
-            profile = CVProfile(session_key_hash=key, created_at=now)
+            profile = CVProfile(
+                session_key_hash=key,
+                user_id=user.id if user and user.role == "candidate" else None,
+                created_at=now,
+            )
             db.add(profile)
         else:
             db.query(MatchCache).filter_by(cv_id=profile.id).delete(synchronize_session=False)
@@ -252,6 +272,31 @@ def matches(request: Request, db: Session = Depends(get_db)):
                 cached.why = explanation
     db.commit()
     return _render(request, "matches.html", profile=profile, matches=top_rows)
+
+
+@router.get("/account", response_class=HTMLResponse)
+def candidate_account(request: Request, db: Session = Depends(get_db)):
+    user = current_user(request, db)
+    if not user:
+        return RedirectResponse("/login", status_code=303)
+    if user.role == "employer":
+        return RedirectResponse("/employer/dashboard", status_code=303)
+    profile = _profile(request, db)
+    applications = (
+        db.query(Application, Job)
+        .join(Job, Job.id == Application.job_id)
+        .filter(func.lower(Application.candidate_email) == user.email.casefold())
+        .order_by(Application.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    return _render(
+        request,
+        "account_dashboard.html",
+        user=user,
+        profile=profile,
+        applications=applications,
+    )
 
 
 def cleanup_expired_cvs(db: Session) -> int:

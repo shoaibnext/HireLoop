@@ -1,8 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Daily job alerts | HireLoop{% endblock %}
 {% block content %}
+{% set page_heading = 'Daily job alerts' %}
+{% set page_eyebrow = 'STAY IN THE LOOP' %}
+{% set page_intro = 'Get one daily email when fresh roles match your skills, location, and work preferences.' %}
+{% set page_icon = '#icon-sparkle' %}
+{% set page_art_title = 'Fresh roles, in your inbox' %}
+{% set page_art_caption = 'Only when new matches arrive' %}
+{% include "_page_hero.html" %}
 <section class="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow">
-  <h1 class="mb-3 text-3xl font-bold">Daily job alerts</h1>
   <p class="mb-4">{{ message }}</p>
   {% if error %}<p role="alert" class="mb-4 rounded bg-red-50 p-3">{{ error }}</p>{% endif %}
   {% if preferences_token %}<form method="post" action="/alerts/preferences/{{ preferences_token }}" class="grid gap-4">

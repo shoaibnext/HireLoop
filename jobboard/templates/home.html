@@ -4,32 +4,76 @@
 {% block og_title %}{{ meta_title|default('Tech jobs in Pakistan | HireLoop') }}{% endblock %}
 {% block content %}
 {% if landing_breadcrumb_ld %}<script nonce="{{ request.state.csp_nonce }}" type="application/ld+json">{{ landing_breadcrumb_ld|tojson }}</script>{% endif %}
-<h1 class="mb-4 text-3xl font-bold">{{ landing_title|default('Find your next tech role') }}</h1>
-{% if landing_intro %}<p class="mb-5 max-w-3xl">{{ landing_intro }}</p>{% endif %}
-<form method="get" action="{{ form_action|default('') }}" class="mb-6 grid gap-3 rounded-2xl bg-white p-4 shadow">
-  <label>Search<input class="block w-full rounded border p-3" name="q" value="{{ q }}"></label>
-  <label>Location<input class="block w-full rounded border p-3" name="location" value="{{ location }}"></label>
-  <fieldset><legend class="font-medium">Experience level</legend><div class="flex flex-wrap gap-4">
-    {% for level in ['junior', 'mid', 'senior'] %}<label class="flex min-h-11 items-center gap-2"><input type="checkbox" name="level" value="{{ level }}" {% if level in levels %}checked{% endif %}>{{ level|capitalize }}</label>{% endfor %}
-  </div></fieldset>
-  <label class="flex min-h-11 items-center gap-2"><input type="checkbox" name="remote" value="true" {% if remote %}checked{% endif %}>Remote</label>
-  <label class="flex min-h-11 items-center gap-2"><input type="checkbox" name="has_salary" value="true" {% if has_salary %}checked{% endif %}>Salary listed</label>
-  <button class="min-h-11 rounded bg-indigo-700 px-4 text-white">Search jobs</button>
-</form>
-{% if ads_enabled %}{% include "_ad_unit.html" %}{% endif %}
-<p class="mb-3">{{ total }} jobs {% if cv_exists %}· <a href="/matches" class="text-indigo-800 underline">View my matches</a>{% else %}· <a href="/upload-cv" class="text-indigo-800 underline">Match jobs to your CV</a>{% endif %}</p>
-<section aria-label="Job listings" class="grid gap-3">
-  {% for job in jobs %}<article class="rounded-2xl bg-white p-5 shadow">
-    {% if job.id in featured_ids %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-blue-50 px-3 font-semibold">Featured</p>{% endif %}
-    {% if cv_exists and job.id in match_scores %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-green-50 px-3 font-semibold text-green-900">{{ match_scores[job.id] }}% CV match</p>{% endif %}
-    <h2 class="text-xl font-semibold"><a href="/jobs/{{ job.id }}-{{ job.title|lower|replace(' ', '-') }}">{{ job.title }}</a></h2>
-    <p>{{ job.company }} · {{ job.location }}{% if job.is_remote %} · Remote{% endif %}</p>
-    {% if job.source == 'direct' and job.salary_currency and (job.salary_min is not none or job.salary_max is not none) %}<p>{{ job.salary_currency }}{% if job.salary_min is not none %} {{ "{:,.0f}".format(job.salary_min) }}{% endif %}{% if job.salary_min is not none and job.salary_max is not none %} to{% endif %}{% if job.salary_max is not none %} {{ "{:,.0f}".format(job.salary_max) }}{% endif %} / month</p>{% elif job.salary %}<p>{{ job.salary }}</p>{% endif %}
-    {% if job.source == 'remotive' %}<p>via <a href="{{ job.source_url }}" rel="nofollow">Remotive</a></p>{% elif job.source == 'remoteok' %}<p>via <a href="{{ job.source_url }}">RemoteOK</a></p>{% endif %}
-    <a class="mt-2 inline-flex min-h-11 items-center text-indigo-800 underline" href="mailto:{{ contact_email }}?subject=Report%20job%20{{ job.id }}">Report this job</a>
-  </article>{% else %}<p>No jobs found. Try a different search.</p>{% endfor %}
+
+<section class="hl-hero" aria-labelledby="hero-title">
+  <div class="hl-hero-copy">
+    <p class="hl-eyebrow">GOOD MORNING, BUILDER</p>
+    <h1 id="hero-title">{{ landing_title|default('Your next tech role is closer than you think.') }}</h1>
+    <p class="hl-hero-subtitle">Find work that fits your skills and the future you want to build.</p>
+    {% if landing_intro %}<p class="hl-landing-intro">{{ landing_intro }}</p>{% endif %}
+  </div>
+  <div class="hl-hero-art" aria-hidden="true">
+    <div class="hl-art-orbit hl-art-orbit-one"></div><div class="hl-art-orbit hl-art-orbit-two"></div>
+    <div class="hl-art-window"><div class="hl-art-window-top"><i></i><i></i><i></i></div><div class="hl-art-chart"><span></span><span></span><span></span><span></span><span></span><span></span></div><div class="hl-art-artifact"></div></div>
+    <div class="hl-art-caption"><span class="hl-art-dot"></span> A better fit starts here</div>
+  </div>
 </section>
-<nav aria-label="Pagination" class="mt-6 flex gap-4">{% if page > 1 %}<a href="?page={{ page - 1 }}">Previous</a>{% endif %}<span>Page {{ page }} of {{ pages }}</span>{% if page < pages %}<a href="?page={{ page + 1 }}">Next</a>{% endif %}</nav>
-{% if skill_landing_links %}<section class="mt-10 rounded-2xl bg-white p-5 shadow"><h2 class="text-xl font-semibold">Browse jobs by skill</h2><ul class="mt-3 flex flex-wrap gap-3">{% for slug, label, skill in skill_landing_links %}<li><a class="text-indigo-800 underline" href="/jobs/skill/{{ slug }}">{{ label }}</a></li>{% endfor %}</ul></section>{% endif %}
-{% if city_landing_links %}<section class="mt-4 rounded-2xl bg-white p-5 shadow"><h2 class="text-xl font-semibold">Browse jobs by city</h2><ul class="mt-3 flex flex-wrap gap-3">{% for slug, (city, intro) in city_landing_links %}<li><a class="text-indigo-800 underline" href="/jobs/city/{{ slug }}">{{ city }}</a></li>{% endfor %}</ul></section>{% endif %}
+
+<form id="job-search" method="get" action="{{ form_action|default('/') }}" class="hl-search-panel" role="search">
+  <label class="hl-search-field" for="job-query"><svg aria-hidden="true"><use href="#icon-search"></use></svg><span class="sr-only">Search jobs or companies</span><input id="job-query" name="q" value="{{ q }}" type="search" autocomplete="off" placeholder="Search job, company or skill"></label>
+  <label class="hl-search-field hl-location-field" for="job-location"><svg aria-hidden="true"><use href="#icon-pin"></use></svg><span class="sr-only">Location</span><input id="job-location" name="location" value="{{ location }}" type="search" placeholder="Pakistan or remote"></label>
+  <button type="submit" class="hl-search-button"><svg aria-hidden="true"><use href="#icon-search"></use></svg><span>Search jobs</span></button>
+  <details class="hl-more-filters">
+    <summary><svg aria-hidden="true"><use href="#icon-sliders"></use></svg> Filters</summary>
+    <div class="hl-filter-popover">
+      <fieldset><legend>Experience level</legend><div class="hl-filter-options">{% for level in ['junior', 'mid', 'senior'] %}<label><input type="checkbox" name="level" value="{{ level }}" {% if level in levels %}checked{% endif %}> {{ level|capitalize }}</label>{% endfor %}</div></fieldset>
+      <fieldset><legend>Employment type</legend><div class="hl-filter-options">{% for job_type in ['full-time', 'part-time', 'contract', 'freelance', 'internship'] %}<label><input type="checkbox" name="type" value="{{ job_type }}" {% if job_type in types %}checked{% endif %}> {{ job_type|replace('-', ' ')|capitalize }}</label>{% endfor %}</div></fieldset>
+      <label class="hl-filter-check"><input type="checkbox" name="remote" value="true" {% if remote %}checked{% endif %}> Remote roles</label>
+      <label class="hl-filter-check"><input type="checkbox" name="has_salary" value="true" {% if has_salary %}checked{% endif %}> Salary listed</label>
+      <button type="submit" class="hl-filter-apply">Apply filters</button>
+    </div>
+  </details>
+</form>
+
+{% if ads_enabled %}{% include "_ad_unit.html" %}{% endif %}
+
+{% if not q and not location and not remote and not types and not levels and not has_salary %}
+<section class="hl-section" aria-labelledby="category-heading">
+  <div class="hl-section-heading"><div><p class="hl-eyebrow">EXPLORE YOUR NEXT MOVE</p><h2 id="category-heading">Popular categories</h2></div><a href="#jobs" class="hl-text-link">Browse all <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></a></div>
+  <div class="hl-category-grid">
+    <a class="hl-category-card hl-category-sky" href="/jobs/skill/python"><span class="hl-category-icon"><svg aria-hidden="true"><use href="#icon-code"></use></svg></span><span>Engineering</span><small>Build what’s next</small></a>
+    <a class="hl-category-card hl-category-mint" href="/jobs/skill/react"><span class="hl-category-icon"><svg aria-hidden="true"><use href="#icon-layers"></use></svg></span><span>Product &amp; UI</span><small>Shape better tools</small></a>
+    <a class="hl-category-card hl-category-lilac" href="/jobs/skill/sql"><span class="hl-category-icon"><svg aria-hidden="true"><use href="#icon-chart"></use></svg></span><span>Data</span><small>Turn insight to action</small></a>
+    <a class="hl-category-card hl-category-peach" href="/jobs/skill/llm"><span class="hl-category-icon"><svg aria-hidden="true"><use href="#icon-spark"></use></svg></span><span>AI &amp; ML</span><small>Make intelligence useful</small></a>
+  </div>
+</section>
+{% else %}
+<section class="hl-section hl-search-results-heading" aria-labelledby="results-heading"><div><p class="hl-eyebrow">YOUR SEARCH</p><h2 id="results-heading">{{ total }} job{% if total != 1 %}s{% endif %} found</h2></div><p>Sorted by newest and featured roles</p></section>
+{% endif %}
+
+<section id="jobs" class="hl-section" aria-labelledby="jobs-heading">
+  <div class="hl-section-heading"><div><p class="hl-eyebrow">{{ 'SEARCH RESULTS' if q or location or remote or types or levels or has_salary else 'HAND-PICKED FOR YOUR SEARCH' }}</p><h2 id="jobs-heading">{{ 'Jobs matching your filters' if q or location or remote or types or levels or has_salary else 'Recommended jobs' }}</h2></div>{% if total %}<span class="hl-count-pill">{{ total }} available</span>{% endif %}</div>
+  <div class="hl-job-grid">
+    {% for job in jobs %}
+    <article class="hl-job-card">
+      <div class="hl-job-card-top">
+        <span class="hl-company-mark" aria-hidden="true">{{ job.company[0]|upper if job.company else 'H' }}</span>
+        <div class="hl-job-card-title"><h3><a href="/jobs/{{ job.id }}-{{ job.title|lower|replace(' ', '-') }}">{{ job.title }}</a></h3><p>{{ job.company }}</p></div>
+        {% if job.id in featured_ids %}<span class="hl-job-badge">Featured</span>{% elif cv_exists and job.id in match_scores %}<span class="hl-match-badge">{{ match_scores[job.id] }}% match</span>{% endif %}
+      </div>
+      <div class="hl-job-meta"><span><svg aria-hidden="true"><use href="#icon-pin"></use></svg>{{ job.location or 'Location not listed' }}</span><span><svg aria-hidden="true"><use href="#icon-briefcase"></use></svg>{{ job.job_type|replace('-', ' ')|capitalize }}</span>{% if job.is_remote %}<span class="hl-remote-tag">Remote</span>{% endif %}</div>
+      {% if job.source == 'direct' and job.salary_currency and (job.salary_min is not none or job.salary_max is not none) %}<p class="hl-job-salary">{{ job.salary_currency }}{% if job.salary_min is not none %} {{ "{:,.0f}".format(job.salary_min) }}{% endif %}{% if job.salary_min is not none and job.salary_max is not none %} to{% endif %}{% if job.salary_max is not none %} {{ "{:,.0f}".format(job.salary_max) }}{% endif %}<span> / month</span></p>{% elif job.salary %}<p class="hl-job-salary">{{ job.salary }}</p>{% endif %}
+      {% if job.skills %}<div class="hl-skill-tags">{% for skill in job.skills.split(',')[:4] %}<span>{{ skill|trim }}</span>{% endfor %}</div>{% endif %}
+      <div class="hl-job-card-footer"><span class="hl-job-source">{% if job.source == 'remotive' %}Listed via <a href="{{ job.source_url }}" rel="nofollow">Remotive</a>{% elif job.source == 'remoteok' %}Listed via <a href="{{ job.source_url }}">RemoteOK</a>{% elif job.source == 'skillzdunya' %}Listed via <a href="{{ job.source_url }}" rel="nofollow">SkillzDunya</a>{% else %}Direct employer post{% endif %}</span><a class="hl-card-arrow" href="/jobs/{{ job.id }}-{{ job.title|lower|replace(' ', '-') }}" aria-label="View {{ job.title }} at {{ job.company }}"><svg aria-hidden="true"><use href="#icon-arrow"></use></svg></a></div>
+    </article>
+    {% else %}<div class="hl-empty-state"><span class="hl-empty-icon"><svg aria-hidden="true"><use href="#icon-search"></use></svg></span><h3>No jobs found</h3><p>Try another skill or location, or clear a filter to see more roles.</p><a href="/" class="hl-search-button">Clear search</a></div>{% endfor %}
+  </div>
+</section>
+
+<nav aria-label="Pagination" class="hl-pagination">{% if page > 1 %}<a href="{{ request.url.include_query_params(page=page - 1) }}">Previous</a>{% endif %}<span>Page {{ page }} of {{ pages }}</span>{% if page < pages %}<a href="{{ request.url.include_query_params(page=page + 1) }}">Next</a>{% endif %}</nav>
+
+{% if cv_exists %}<aside class="hl-match-callout"><div><p class="hl-eyebrow">YOUR NEXT STEP</p><h2>Your CV match list is ready</h2><p>See how your skills line up with available roles.</p></div><a href="/matches" class="hl-search-button">View my matches</a></aside>{% else %}<aside class="hl-match-callout"><div><p class="hl-eyebrow">A MORE PERSONAL SEARCH</p><h2>See which roles fit your skills</h2><p>Upload your CV to get explainable job matches. Your CV stays private unless you choose to apply.</p></div><a href="/upload-cv" class="hl-search-button">Match my CV</a></aside>{% endif %}
+
+{% if skill_landing_links %}<section class="hl-seo-links"><h2>Browse jobs by skill</h2><ul>{% for slug, label, skill in skill_landing_links %}<li><a href="/jobs/skill/{{ slug }}">{{ label }}</a></li>{% endfor %}</ul></section>{% endif %}
+{% if city_landing_links %}<section class="hl-seo-links"><h2>Browse jobs by city</h2><ul>{% for slug, (city, intro) in city_landing_links %}<li><a href="/jobs/city/{{ slug }}">{{ city }}</a></li>{% endfor %}</ul></section>{% endif %}
 {% endblock %}

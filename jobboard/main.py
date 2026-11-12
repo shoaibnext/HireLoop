@@ -484,8 +484,20 @@ def job_detail(job_ref: str, request: Request, db: Session = Depends(get_db)):
     )
 
 
-@app.get("/{page_name:regex(about|contact|privacy)}", response_class=HTMLResponse)
-def static_page(page_name: str, request: Request):
+@app.get("/about", response_class=HTMLResponse)
+@app.get("/contact", response_class=HTMLResponse)
+@app.get("/privacy", response_class=HTMLResponse)
+def static_page(request: Request):
+    page_name = request.url.path.strip("/")
+    if page_name == "about":
+        return templates.TemplateResponse(
+            request=request,
+            name="about.html",
+            context={
+                "noindex": False,
+                "canonical_url": f"{settings.site_url}/about",
+            },
+        )
     pages = {
         "about": (
             "About HireLoop",
@@ -494,7 +506,7 @@ def static_page(page_name: str, request: Request):
         "contact": ("Contact", f"Contact us at {settings.contact_email}."),
         "privacy": (
             "Privacy",
-            "When you upload a CV, we store only extracted text and recognized skills, never the original file. CV data is linked to your signed anonymous session, is automatically deleted after 30 days, and can be deleted immediately with Delete my CV. We do not share it with employers unless you explicitly choose to apply. If optional match explanations are enabled, Anthropic receives only the job title and matched or missing skill names, never your CV text. Email alert addresses and preferences are used only to send the alerts you requested; every email includes an unsubscribe link that immediately deletes that subscription and its preferences.",
+            "When you upload a CV, we store only extracted text and recognized skills, never the original file. CV data is linked to your signed session or candidate account, is automatically deleted after 30 days, and can be deleted immediately with Delete my CV. We do not share it with employers unless you explicitly choose to apply. Candidate and employer accounts receive a one-time verification code by email; the code expires after 10 minutes and is stored only as a keyed hash. If optional match explanations are enabled, Anthropic receives only the job title and matched or missing skill names, never your CV text. Email alert addresses and preferences are used only to send the alerts you requested; every email includes an unsubscribe link that immediately deletes that subscription and its preferences.",
         ),
     }
     if page_name not in pages:
@@ -504,6 +516,16 @@ def static_page(page_name: str, request: Request):
         request=request,
         name="page.html",
         context={"title": title, "body": body, "noindex": False},
+    )
+
+
+@app.get("/for-employers", response_class=HTMLResponse)
+def for_employers(request: Request):
+    """Employer overview that explains the live posting and applicant tools."""
+    return templates.TemplateResponse(
+        request=request,
+        name="for_employers.html",
+        context={"noindex": False},
     )
 
 
@@ -628,6 +650,7 @@ def api_jobs(
                 "company": j.company,
                 "location": j.location,
                 "source": j.source,
+                "source_url": j.source_url,
             }
             for j in jobs
         ],

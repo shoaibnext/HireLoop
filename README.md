@@ -52,6 +52,12 @@ Create a Render Postgres database and web service from this repository. Set `DAT
 
 GitHub Actions runs Ruff and pytest for pushes and pull requests. Never commit `.env` or production credentials.
 
+## Accounts and sign-in
+
+Create a candidate or employer account at `/signup`, then verify the email with the six-digit code before opening the account. Codes expire after 10 minutes, allow five attempts, and can be resent with a cooldown. Configure `EMAIL_API_KEY` (Resend API key), `EMAIL_FROM` (verified sender), `SITE_URL`, and a long random `SECRET_KEY` so account verification mail can be delivered. For local development only, when using the default development secret on localhost, the OTP is shown on the verification screen. Existing accounts are treated as verified by the migration. Candidate accounts have a private account page at `/account` with CV matches and recent application statuses; employer accounts go to the posting dashboard. Passwords are hashed, sessions use signed HttpOnly cookies with SameSite=Lax, forms validate CSRF tokens, and signup/sign-in are rate limited. Apply the schema with `alembic upgrade head` before deploying.
+
+Google sign-in and sign-up use the server-side OpenID Connect flow. Create a Google OAuth client for a web application, add `${SITE_URL}/auth/google/callback` as an authorized redirect URI, and set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. New Google sign-ups can choose candidate or employer; employers must provide their company name. Google accounts with verified email addresses are marked verified on HireLoop.
+
 ## Employer posting and moderation
 
 Employers can create an account at `/signup`, submit a job at `/post-job`, and manage their listings at `/employer/dashboard`. New submissions are pending until an admin approves them. Set `ADMIN_EMAILS` to a comma-separated list of admin account emails. Admins review jobs at `/admin/jobs` and can approve or reject posts, record manual payment notes, and activate or remove a featured listing.
@@ -71,11 +77,11 @@ python ingest.py --dry-run # fetch and report counts without writing
 python ingest.py --stats   # show the latest ten per-source runs
 ```
 
-The ingester uses only Remotive and RemoteOK's public JSON APIs. Remotive requests are limited to four per UTC day with a six-hour minimum gap; the daily Action runs at 03:00 UTC. Configure the GitHub repository secret `DATABASE_URL` with the same Postgres database used by the web service. The workflow runs `alembic upgrade head` before ingestion and can also be started with `workflow_dispatch`.
+The ingester uses the Remotive and RemoteOK public feeds plus SkillzDunya's free Pakistan jobs API (credited on each listing; see [docs/SOURCES.md](docs/SOURCES.md)). SkillzDunya is an independent Pakistan jobs feed, not Google Jobs, and includes roles outside technology. Remotive requests are limited to four per UTC day with a six-hour minimum gap; the daily Action runs at 03:00 UTC. Configure the GitHub repository secret `DATABASE_URL` with the same Postgres database used by the web service. The workflow runs `alembic upgrade head` before ingestion and can also be started with `workflow_dispatch`.
 
 ## CV matching and privacy
 
-At `/upload-cv`, upload a PDF or DOCX up to 5 MB to get explainable matches at `/matches`. HireLoop keeps extracted text and recognized skills only; it never saves the uploaded file. CV data is attached to a signed anonymous session, expires after 30 days, and can be removed immediately with **Delete my CV**. It is not shared with employers unless you explicitly apply. If `ANTHROPIC_API_KEY` is configured, match explanations send Anthropic only a job title and matched/missing skill labels, not CV text. Without the key, HireLoop uses a deterministic explanation.
+At `/upload-cv`, upload a PDF or DOCX up to 5 MB to get explainable matches at `/matches`. HireLoop keeps extracted text and recognized skills only; it never saves the uploaded file. For signed-in candidates, CV profiles are linked to the account; anonymous CV profiles remain attached to a signed session. Both expire after 30 days and can be removed immediately with **Delete my CV**. CV data is not shared with employers unless you explicitly apply. If `ANTHROPIC_API_KEY` is configured, match explanations send Anthropic only a job title and matched/missing skill labels, not CV text. Without the key, HireLoop uses a deterministic explanation.
 
 Set the optional `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in the environment to enable generated explanations. A daily GitHub Actions cleanup workflow deletes expired CV data at 03:30 UTC; configure the repository `DATABASE_URL` secret. Run cleanup manually with `python cleanup_cvs.py` after `alembic upgrade head`.
 

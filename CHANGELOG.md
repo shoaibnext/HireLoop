@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+- Added SkillzDunya's free Pakistan jobs API as an attributed ingestion source.
+- Applied the home screen's blue palette, rounded surfaces, form controls, and active navigation states across the app.
+- Added the home screen's blue-gradient hero treatment to About, Career Guides, Job Alerts, employer posting, sign-in, and account creation pages.
+- Added candidate registration and sign-in, account-linked CV profiles, and a job seeker account page while keeping employer accounts intact.
+- Added six-digit email OTP verification to candidate and employer signup, with expiry, attempt limits, resend cooldowns, and verified-account sign-in checks.
+- Added Google OpenID Connect sign-in/sign-up buttons for candidate and employer accounts.
+- Replaced the short About placeholder with a complete HireLoop overview covering job search, CV privacy, sources, alerts, and employer posting.
+
 ## M8 — Operations
 - Added an admin-only operations page with jobs by source, active job counts, new employers, and application totals.
 - Added optional Sentry error reporting, database-backed uptime check coverage, and documented SQLite/Postgres backup and restore steps.
@@ -32,3 +42,6 @@
 ## M1 — Foundations
 - Added the FastAPI/SQLAlchemy job board foundation, initial Alembic migration, configuration, health check, and baseline routes.
 - Added isolated SQLite behavior tests, CI, Render configuration, and setup documentation.
+# Unreleased
+
+- Add SkillzDunya's free Pakistan jobs API as an attributed ingestion source.

@@ -1,17 +1,58 @@
 {% extends "base.html" %}
-{% block title %}Employer signup — HireLoop{% endblock %}
+{% block title %}Create an account | HireLoop{% endblock %}
 {% block content %}
-<section class="mx-auto max-w-xl rounded-2xl bg-white p-6 shadow">
-  <h1 class="text-3xl font-bold">Create an employer account</h1>
-  <p class="mt-2">Post technology and AI roles for candidates in Pakistan.</p>
-  <form method="post" action="/signup" class="mt-6 grid gap-4">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <label>Email address<input class="mt-1 block min-h-11 w-full rounded border p-3" type="email" name="email" autocomplete="email" value="{{ values.get('email', '') }}" required>{% if errors.get('email') %}<span class="text-red-800">{{ errors.email }}</span>{% endif %}</label>
-    <label>Password<input class="mt-1 block min-h-11 w-full rounded border p-3" type="password" name="password" autocomplete="new-password" minlength="10" required><span class="text-sm">Use 10–72 bytes.</span>{% if errors.get('password') %}<span class="text-red-800">{{ errors.password }}</span>{% endif %}</label>
-    <label>Company name<input class="mt-1 block min-h-11 w-full rounded border p-3" name="company_name" value="{{ values.get('company_name', '') }}" required>{% if errors.get('company_name') %}<span class="text-red-800">{{ errors.company_name }}</span>{% endif %}</label>
-    <label>Company website <span class="text-sm">(optional)</span><input class="mt-1 block min-h-11 w-full rounded border p-3" type="url" name="website" value="{{ values.get('website', '') }}">{% if errors.get('website') %}<span class="text-red-800">{{ errors.website }}</span>{% endif %}</label>
-    <button class="min-h-11 rounded bg-indigo-700 px-4 text-white">Create account</button>
-  </form>
-  <p class="mt-4">Already registered? <a class="text-indigo-800 underline" href="/login">Sign in</a>.</p>
+<section class="hl-auth-page hl-auth-page-signup" aria-labelledby="auth-title">
+  <header class="hl-auth-heading">
+    <a class="hl-auth-brand" href="/" aria-label="HireLoop home"><span class="hl-auth-brand-mark"><svg aria-hidden="true"><use href="#icon-briefcase"></use></svg></span><span>Hire<span>Loop</span></span></a>
+    <p class="hl-eyebrow">GET STARTED WITH HIRELOOP</p>
+    <h1 id="auth-title">Create your account.</h1>
+    <p>Find your next role or hire technology talent in Pakistan.</p>
+  </header>
+  <div class="hl-auth-card">
+    {% if errors.account_type %}<p role="alert" class="mb-4 p-3">{{ errors.account_type }}</p>{% endif %}
+    {% if errors.delivery %}<p role="alert" class="mb-4 p-3">{{ errors.delivery }}</p>{% endif %}
+    {% if errors.google %}<p role="alert" class="mb-4 p-3">{{ errors.google }}</p>{% endif %}
+    {% if google_oauth_enabled %}<form id="google-signup-form" method="post" action="/auth/google"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><input type="hidden" name="source" value="signup"><input id="google-account-type" type="hidden" name="account_type" value="{{ values.get('account_type', 'candidate') }}"><input id="google-company-name" type="hidden" name="company_name" value="{{ values.get('company_name', '') }}"><input id="google-company-website" type="hidden" name="website" value="{{ values.get('website', '') }}"><button class="hl-google-button" type="submit"><svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4V15H5.8a20 20 0 0 0 0 18l6.8-5.3Z"/><path fill="#EA4335" d="M24 11.9c3 0 5.7 1 7.8 3.1l5.9-5.9C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.8 15l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z"/></svg>Sign up with Google</button></form>{% else %}<button class="hl-google-button" type="button" disabled aria-describedby="google-config-hint"><svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#4285F4" d="M43.6 24.5c0-1.4-.1-2.8-.4-4.1H24v7.8h11a9.4 9.4 0 0 1-4.1 6.2v5.1h6.6c3.9-3.6 6.1-8.8 6.1-15Z"/><path fill="#34A853" d="M24 44c5.5 0 10.1-1.8 13.5-4.8l-6.6-5.1c-1.8 1.2-4.1 2-6.9 2-5.3 0-9.8-3.6-11.4-8.4H5.8v5.3A20 20 0 0 0 24 44Z"/><path fill="#FBBC05" d="M12.6 27.7a12 12 0 0 1 0-7.4V15H5.8a20 20 0 0 0 0 18l6.8-5.3Z"/><path fill="#EA4335" d="M24 11.9c3 0 5.7 1 7.8 3.1l5.9-5.9C34.1 5.8 29.5 4 24 4A20 20 0 0 0 5.8 15l6.8 5.3c1.6-4.8 6.1-8.4 11.4-8.4Z"/></svg>Sign up with Google</button><small id="google-config-hint" class="hl-auth-help">Google sign-in becomes available when OAuth credentials are configured.</small>{% endif %}
+    <div class="hl-auth-divider"><span>Or sign up with email</span></div>
+    <form method="post" action="/signup" class="grid gap-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="hl-auth-label" for="account_type">I’m here to
+        <select id="account_type" name="account_type" class="hl-auth-input" aria-describedby="account-type-help">
+          <option value="candidate" {% if values.get('account_type', 'candidate') == 'candidate' %}selected{% endif %}>Find a job · Candidate</option>
+          <option value="employer" {% if values.get('account_type') == 'employer' %}selected{% endif %}>Hire talent · Employer</option>
+        </select>
+      </label>
+      <p id="account-type-help" class="hl-auth-help">You can use one account for your job search or hiring activity.</p>
+      <label class="hl-auth-label" for="signup-email">Email address<input id="signup-email" class="hl-auth-input" type="email" name="email" autocomplete="email" maxlength="320" placeholder="you@example.com" value="{{ values.get('email', '') }}" required>{% if errors.email %}<span class="hl-auth-error">{{ errors.email }}</span>{% endif %}</label>
+      <label class="hl-auth-label" for="signup-password">Create password<input id="signup-password" class="hl-auth-input" type="password" name="password" autocomplete="new-password" minlength="10" maxlength="72" placeholder="At least 10 characters" required><span class="hl-auth-help">Use 10–72 characters.</span>{% if errors.password %}<span class="hl-auth-error">{{ errors.password }}</span>{% endif %}</label>
+      <div id="employer-fields" class="hl-auth-extra grid gap-4" {% if values.get('account_type', 'candidate') != 'employer' %}hidden{% endif %}>
+        <label class="hl-auth-label" for="company-name">Company name<input id="company-name" class="hl-auth-input" name="company_name" maxlength="255" autocomplete="organization" placeholder="Your company" value="{{ values.get('company_name', '') }}">{% if errors.company_name %}<span class="hl-auth-error">{{ errors.company_name }}</span>{% endif %}</label>
+        <label class="hl-auth-label" for="company-website">Company website <span class="hl-auth-help">(optional)</span><input id="company-website" class="hl-auth-input" type="url" name="website" maxlength="2048" autocomplete="url" placeholder="https://example.com" value="{{ values.get('website', '') }}">{% if errors.website %}<span class="hl-auth-error">{{ errors.website }}</span>{% endif %}</label>
+      </div>
+      <button class="hl-auth-submit" type="submit">Create free account <span aria-hidden="true">→</span></button>
+    </form>
+    <p class="hl-auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+  </div>
+  <p class="hl-auth-footnote"><svg aria-hidden="true"><use href="#icon-user"></use></svg> Your account type determines which HireLoop dashboard opens after sign in.</p>
 </section>
+<script nonce="{{ request.state.csp_nonce }}">
+const accountType = document.getElementById('account_type');
+const employerFields = document.getElementById('employer-fields');
+const companyName = document.getElementById('company-name');
+const googleAccountType = document.getElementById('google-account-type');
+const googleCompanyName = document.getElementById('google-company-name');
+const googleCompanyWebsite = document.getElementById('google-company-website');
+function updateAccountFields() {
+  const employerSelected = accountType.value === 'employer';
+  employerFields.hidden = !employerSelected;
+  companyName.required = employerSelected;
+  if (googleAccountType) googleAccountType.value = accountType.value;
+  if (googleCompanyName) googleCompanyName.value = companyName.value;
+  if (googleCompanyWebsite) googleCompanyWebsite.value = document.getElementById('company-website').value;
+}
+accountType.addEventListener('change', updateAccountFields);
+companyName.addEventListener('input', updateAccountFields);
+document.getElementById('company-website').addEventListener('input', updateAccountFields);
+updateAccountFields();
+</script>
 {% endblock %}

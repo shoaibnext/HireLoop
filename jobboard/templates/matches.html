@@ -1,9 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Your job matches | HireLoop{% endblock %}
 {% block content %}
-<h1 class="mb-3 text-3xl font-bold">Your job matches</h1>
-{% if not profile %}<p class="rounded-2xl bg-white p-6 shadow">Upload a CV to see explainable matches. <a class="text-indigo-800 underline" href="/upload-cv">Upload your CV</a></p>
-{% else %}<p class="mb-5">Based on your recognized skills. <a class="text-indigo-800 underline" href="/upload-cv">Update preferences or CV</a></p>
+{% set page_heading = 'Jobs chosen for your skills' %}
+{% set page_eyebrow = 'PERSONALIZED JOB MATCHES' %}
+{% set page_intro = 'See the skills behind every score and review active roles that align with your profile.' %}
+{% set page_icon = '#icon-sparkle' %}
+{% set page_art_title = 'A clearer next step' %}
+{% set page_art_caption = 'Skills matched to real job listings' %}
+{% include "_page_hero.html" %}
+{% if not profile %}<p class="rounded-2xl bg-white p-6 shadow">Upload a CV to see explainable matches. <a class="text-indigo-800 underline" href="/upload-cv">Set up your profile</a></p>
+{% else %}<div class="mb-5 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><p class="m-0">Based on your recognized skills: <strong>{{ profile.skills or 'No recognized skills yet' }}</strong></p><a class="font-semibold text-indigo-800" href="/upload-cv">Update preferences or CV →</a></div>
 <section class="grid gap-4">{% for job, match in matches %}<article class="rounded-2xl bg-white p-5 shadow"><p class="font-semibold text-indigo-800">{{ match.score }}% match</p><h2 class="text-xl font-semibold"><a href="/jobs/{{ job.id }}">{{ job.title }}</a></h2><p>{{ job.company }} · {{ job.location }}</p><p class="mt-2 text-green-800">{% if match.matched_skills %}<svg class="mr-1 inline h-4 w-4" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4 10 4 4 8-8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>{% endif %}Matched skills: {{ match.matched_skills or 'None listed' }}</p><p class="mt-1 text-slate-700">Skills to consider: {{ match.missing_skills or 'None listed' }}</p><p class="mt-2">Why this matches: {{ match.why }}</p></article>{% else %}<p>No active jobs are available to compare right now.</p>{% endfor %}</section>
 {% endif %}
 {% endblock %}

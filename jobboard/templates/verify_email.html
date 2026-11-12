@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Verify your email | HireLoop{% endblock %}
+{% block content %}
+<section class="hl-auth-page" aria-labelledby="auth-title">
+  <header class="hl-auth-heading">
+    <a class="hl-auth-brand" href="/" aria-label="HireLoop home"><span class="hl-auth-brand-mark"><svg aria-hidden="true"><use href="#icon-briefcase"></use></svg></span><span>Hire<span>Loop</span></span></a>
+    <p class="hl-eyebrow">ONE QUICK SECURITY STEP</p>
+    <h1 id="auth-title">Verify your email.</h1>
+    <p>Enter the six-digit code we sent to <strong>{{ masked_email }}</strong>.</p>
+  </header>
+  <div class="hl-auth-card">
+    <div class="hl-auth-context"><span class="hl-auth-context-icon"><svg aria-hidden="true"><use href="#icon-user"></use></svg></span><span><strong>Check your inbox</strong><small>Your code is valid for 10 minutes. Check spam if it isn’t there.</small></span></div>
+    {% if message %}<p role="status" class="mt-4 p-3">{{ message }}</p>{% endif %}
+    {% if error %}<p role="alert" class="mt-4 p-3">{{ error }}</p>{% endif %}
+    {% if development_code %}<p class="hl-dev-otp" role="status"><strong>Local development code</strong><span>{{ development_code }}</span><small>Email delivery is not configured; this preview is available only on localhost with the development secret.</small></p>{% endif %}
+    <form method="post" action="/verify-email" class="mt-5 grid gap-4">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label class="hl-auth-label" for="verification-code">Verification code<input id="verification-code" class="hl-auth-input hl-otp-input" type="text" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" minlength="6" placeholder="000000" aria-describedby="otp-help" required autofocus></label>
+      <p id="otp-help" class="hl-auth-help">You have up to five attempts. Request a new code if this one expires.</p>
+      <button class="hl-auth-submit" type="submit">Verify email <span aria-hidden="true">→</span></button>
+    </form>
+    <form method="post" action="/verify-email/resend" class="hl-auth-resend">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <span>Didn’t receive the code?</span><button type="submit">Send a new code</button>
+    </form>
+    <p class="hl-auth-switch">Wrong email address? <a href="/signup">Start again</a></p>
+  </div>
+  <p class="hl-auth-footnote"><svg aria-hidden="true"><use href="#icon-user"></use></svg> We use this code to confirm you can access this email address.</p>
+</section>
+{% endblock %}

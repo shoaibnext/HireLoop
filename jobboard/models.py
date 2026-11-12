@@ -126,6 +126,12 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
     )
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_verification_hash: Mapped[str | None] = mapped_column(String(64))
+    email_verification_expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_verification_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_verification_attempts: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    google_sub: Mapped[str | None] = mapped_column(String(255), unique=True, index=True)
 
 
 class Employer(Base):
@@ -147,6 +153,9 @@ class CVProfile(Base):
     __tablename__ = "cv_profiles"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True
+    )
     session_key_hash: Mapped[str] = mapped_column(String(64), nullable=False, unique=True, index=True)
     extracted_text: Mapped[str] = mapped_column(Text, nullable=False)
     skills: Mapped[str] = mapped_column(String(2000), nullable=False, default="")

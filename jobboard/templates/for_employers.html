@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Hire with HireLoop | HireLoop{% endblock %}
+{% block content %}
+<section class="hl-page-hero" aria-labelledby="page-title">
+  <div class="hl-page-hero-copy">
+    <p class="hl-eyebrow">FOR EMPLOYERS · PAKISTAN</p>
+    <h1 id="page-title">Find your next great teammate.</h1>
+    <p>Reach technology and AI professionals across Pakistan. Submit a role, review applications, and manage your hiring from one place.</p>
+    <div class="mt-5 flex flex-wrap gap-3"><a class="hl-search-button" href="/post-job">Post a job</a><a class="inline-flex min-h-11 items-center rounded-xl border border-slate-200 bg-white px-4 font-semibold text-slate-700 no-underline" href="/pricing">View pricing</a></div>
+  </div>
+  <div class="hl-page-hero-art" aria-hidden="true"><div class="hl-page-hero-orbit"></div><div class="hl-page-hero-card"><span class="hl-page-hero-icon"><svg><use href="#icon-briefcase"></use></svg></span><span class="hl-page-hero-card-copy"><strong>Software Engineer</strong><small>Applications ready to review</small></span><span class="hl-page-hero-dot"></span></div><span class="hl-page-hero-chip">Hiring in Pakistan</span></div>
+</section>
+<section class="grid gap-4 md:grid-cols-3" aria-label="Hiring steps">
+  <article class="rounded-2xl bg-white p-6 shadow"><span class="hl-category-icon"><svg><use href="#icon-briefcase"></use></svg></span><p class="hl-eyebrow mt-4">01 · POST</p><h2 class="text-xl">Describe the role</h2><p class="mt-2 text-slate-600">Add the responsibilities, location, salary range, and application details. You can request a featured listing when you post.</p></article>
+  <article class="rounded-2xl bg-white p-6 shadow"><span class="hl-category-icon"><svg><use href="#icon-user"></use></svg></span><p class="hl-eyebrow mt-4">02 · REVIEW</p><h2 class="text-xl">Review applicants</h2><p class="mt-2 text-slate-600">See applications for your roles in the employer dashboard. Applicant CVs are shared when candidates apply.</p></article>
+  <article class="rounded-2xl bg-white p-6 shadow"><span class="hl-category-icon"><svg><use href="#icon-chart"></use></svg></span><p class="hl-eyebrow mt-4">03 · MANAGE</p><h2 class="text-xl">Keep hiring on track</h2><p class="mt-2 text-slate-600">Edit, close, or renew listings and follow application statuses from one account.</p></article>
+</section>
+<section class="hl-match-callout mt-6"><div><p class="hl-eyebrow">READY TO GET STARTED?</p><h2>Bring the right people closer.</h2><p>Create an employer account to post a role and manage applicants.</p></div><a class="hl-search-button" href="/post-job">Post a job now</a></section>
+<p class="mt-3 text-center text-sm text-slate-500">New job posts are reviewed before they go live.</p>
+<p class="mt-4 text-center text-sm text-slate-500">Already have an employer account? <a class="text-indigo-800 underline" href="/login">Sign in</a> · <a class="text-indigo-800 underline" href="/employer/dashboard">Open your dashboard</a></p>
+{% endblock %}

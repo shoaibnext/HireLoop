@@ -10,6 +10,7 @@ nh3>=0.2,<1
 Markdown>=3.7,<4
 passlib[bcrypt]>=1.7.4,<2
 itsdangerous>=2.2,<3
+Authlib>=1.4,<2
 python-multipart>=0.0.20,<1
 pypdf>=5,<7
 python-docx>=1.1,<2

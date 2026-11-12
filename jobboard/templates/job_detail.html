@@ -2,16 +2,30 @@
 {% block title %}{{ job.title }} — HireLoop{% endblock %}
 {% block content %}
 {% if job_posting_ld %}<script nonce="{{ request.state.csp_nonce }}" type="application/ld+json">{{ job_posting_ld|tojson }}</script>{% endif %}
-<article class="rounded-2xl bg-white p-6 shadow">
-  {% if application_submitted %}<p role="status" class="mb-4 rounded bg-green-50 p-3">Your application was sent. The employer received the email, note, and recognized CV skills you chose to share.</p>{% endif %}
-  {% if featured %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-blue-50 px-3 font-semibold">Featured</p>{% endif %}
-  {% if match_score is not none %}<p class="mb-2 inline-flex min-h-8 items-center rounded bg-green-50 px-3 font-semibold text-green-900">{{ match_score }}% CV match</p>{% endif %}
-  <h1 class="text-3xl font-bold">{{ job.title }}</h1>
-  <p>{{ job.company }} · {{ job.location }}</p>
-  {% if job.source == 'remotive' %}<p>Listed via <a href="{{ job.source_url }}" rel="nofollow">Remotive</a>.</p>{% elif job.source == 'remoteok' %}<p>Listed via <a href="{{ job.source_url }}">RemoteOK</a>.</p>{% endif %}
-  {% if job.source == 'direct' and job.salary_currency and (job.salary_min is not none or job.salary_max is not none) %}<p class="mt-2">{{ job.salary_currency }}{% if job.salary_min is not none %} {{ "{:,.0f}".format(job.salary_min) }}{% endif %}{% if job.salary_min is not none and job.salary_max is not none %} to{% endif %}{% if job.salary_max is not none %} {{ "{:,.0f}".format(job.salary_max) }}{% endif %} / month</p>{% elif job.salary %}<p class="mt-2">{{ job.salary }}</p>{% endif %}
-  <div class="prose mt-6">{{ description|safe }}</div>
-  {% if job.source == 'direct' %}<div class="mt-6 flex flex-wrap gap-3"><a class="inline-flex min-h-11 items-center rounded bg-indigo-700 px-4 text-white" href="/jobs/{{ job.id }}/apply">Apply through HireLoop</a>{% if job.apply_url %}<a class="inline-flex min-h-11 items-center text-indigo-800 underline" href="{{ job.apply_url }}" rel="nofollow">Apply on employer site</a>{% elif job.apply_email %}<a class="inline-flex min-h-11 items-center text-indigo-800 underline" href="mailto:{{ job.apply_email }}">Apply by email</a>{% endif %}</div>{% elif job.source_url %}<a class="mt-6 inline-block" href="{{ job.source_url }}">View and apply on source site</a>{% endif %}
-  <p class="mt-5"><a class="text-indigo-800 underline" href="mailto:{{ contact_email }}?subject=Report%20job%20{{ job.id }}">Report this job</a></p>
-</article>
+<div class="hl-detail-layout">
+  <article class="hl-detail-main">
+    <a class="hl-detail-back" href="/"><svg aria-hidden="true"><use href="#icon-arrow"></use></svg> Back to jobs</a>
+    {% if application_submitted %}<p role="status" class="hl-application-notice">Your application was sent. The employer received the email, note, and recognized CV skills you chose to share.</p>{% endif %}
+    {% if featured %}<span class="hl-job-badge">Featured role</span>{% endif %}{% if match_score is not none %}<span class="hl-match-badge">{{ match_score }}% CV match</span>{% endif %}
+    <div class="hl-detail-company"><span class="hl-detail-company-mark" aria-hidden="true">{{ job.company[0]|upper if job.company else 'H' }}</span><div><h1>{{ job.title }}</h1><p>{{ job.company }}</p></div></div>
+    {% if job.source == 'remotive' %}<p class="hl-detail-source">Listed via <a href="{{ job.source_url }}" rel="nofollow">Remotive</a>.</p>{% elif job.source == 'remoteok' %}<p class="hl-detail-source">Listed via <a href="{{ job.source_url }}">RemoteOK</a>.</p>{% elif job.source == 'skillzdunya' %}<p class="hl-detail-source">Listed via <a href="{{ job.source_url }}" rel="nofollow">SkillzDunya</a>.</p>{% else %}<p class="hl-detail-source">Posted directly by {{ job.company }} on HireLoop.</p>{% endif %}
+    <div class="hl-detail-facts">
+      <div class="hl-detail-fact"><svg aria-hidden="true"><use href="#icon-pin"></use></svg><span><strong>Location</strong>{{ job.location or 'Not listed' }}</span></div>
+      <div class="hl-detail-fact"><svg aria-hidden="true"><use href="#icon-briefcase"></use></svg><span><strong>Employment</strong>{{ job.job_type|replace('-', ' ')|capitalize }}</span></div>
+      <div class="hl-detail-fact"><svg aria-hidden="true"><use href="#icon-chart"></use></svg><span><strong>Experience</strong>{{ job.level|capitalize if job.level != 'unknown' else 'Not specified' }}</span></div>
+      {% if job.is_remote %}<div class="hl-detail-fact"><svg aria-hidden="true"><use href="#icon-home"></use></svg><span><strong>Work style</strong>Remote</span></div>{% endif %}
+      {% if job.posted_at or job.created_at %}<div class="hl-detail-fact"><svg aria-hidden="true"><use href="#icon-sparkle"></use></svg><span><strong>Posted</strong>{{ (job.posted_at or job.created_at).strftime('%b %d, %Y') }}</span></div>{% endif %}
+      {% if job.source == 'direct' and (job.salary_min is not none or job.salary_max is not none) %}<div class="hl-detail-fact"><svg aria-hidden="true"><use href="#icon-chart"></use></svg><span><strong>Salary</strong>{{ job.salary_currency or '' }}{% if job.salary_min is not none %} {{ "{:,.0f}".format(job.salary_min) }}{% endif %}{% if job.salary_min is not none and job.salary_max is not none %} to{% endif %}{% if job.salary_max is not none %} {{ "{:,.0f}".format(job.salary_max) }}{% endif %} / month</span></div>{% elif job.salary %}<div class="hl-detail-fact"><svg aria-hidden="true"><use href="#icon-chart"></use></svg><span><strong>Salary</strong>{{ job.salary }}</span></div>{% endif %}
+    </div>
+    {% if job.skills %}<section class="hl-detail-section"><h2>Skills for this role</h2><div class="hl-detail-skills">{% for skill in job.skills.split(',') %}<span>{{ skill|trim }}</span>{% endfor %}</div></section>{% endif %}
+    <section class="hl-detail-section"><h2>About this role</h2><div class="prose">{{ description|safe }}</div></section>
+    <p class="mt-6 text-sm"><a class="text-indigo-800 underline" href="mailto:{{ contact_email }}?subject=Report%20job%20{{ job.id }}">Report this job</a></p>
+  </article>
+  <aside class="hl-detail-sidebar" aria-label="Application details">
+    <p class="hl-eyebrow">YOUR NEXT STEP</p><h2>Interested in this role?</h2>
+    {% if job.source == 'direct' %}<p>Apply through HireLoop and share only the details you choose.</p><a class="hl-detail-apply" href="/jobs/{{ job.id }}/apply">Apply through HireLoop</a>{% if job.apply_url %}<a class="hl-detail-secondary" href="{{ job.apply_url }}" rel="nofollow">Apply on employer site</a>{% elif job.apply_email %}<a class="hl-detail-secondary" href="mailto:{{ job.apply_email }}">Apply by email</a>{% endif %}
+    {% elif job.source_url %}<p>Continue to the original listing to review its full details and application steps.</p><a class="hl-detail-apply" href="{{ job.source_url }}" {% if job.source in ['remotive', 'skillzdunya'] %}rel="nofollow"{% endif %}>View and apply on source</a>{% endif %}
+    {% if job.source == 'direct' %}<p class="mt-4 text-xs">Your CV is not shared unless you explicitly apply.</p>{% endif %}
+  </aside>
+</div>
 {% endblock %}

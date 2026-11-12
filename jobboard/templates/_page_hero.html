@@ -1,0 +1,16 @@
+<section class="hl-page-hero" aria-labelledby="page-title">
+  <div class="hl-page-hero-copy">
+    <p class="hl-eyebrow">{{ page_eyebrow|default('YOUR NEXT MOVE') }}</p>
+    <h1 id="page-title">{{ page_heading }}</h1>
+    <p>{{ page_intro }}</p>
+  </div>
+  <div class="hl-page-hero-art" aria-hidden="true">
+    <div class="hl-page-hero-orbit"></div>
+    <div class="hl-page-hero-card">
+      <span class="hl-page-hero-icon"><svg><use href="{{ page_icon|default('#icon-briefcase') }}"></use></svg></span>
+      <span class="hl-page-hero-card-copy"><strong>{{ page_art_title|default('A better fit starts here') }}</strong><small>{{ page_art_caption|default('Discover your next opportunity') }}</small></span>
+      <span class="hl-page-hero-dot"></span>
+    </div>
+    <span class="hl-page-hero-chip">HireLoop · Pakistan</span>
+  </div>
+</section>
