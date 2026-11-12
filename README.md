@@ -100,3 +100,7 @@ Skill landing pages use `/jobs/skill/{skill}` for the curated skills linked from
 Publish Markdown articles in `content/blog/` with a filename slug and this front matter: `title`, `description`, `published` (`YYYY-MM-DD`), and optional `updated` (`YYYY-MM-DD`). Blog pages are sanitized before rendering, expose canonical/Open Graph/Twitter metadata, and article `updated` dates appear as sitemap `lastmod` values. The sitemap also includes the blog and qualifying skill/city pages.
 
 AdSense units are rendered only on job-listing and blog pages when `ADS_ENABLED=1` and both `ADSENSE_CLIENT` and `ADSENSE_SLOT` are configured. Keep ads disabled until your AdSense account and site are approved and the publisher/slot values are available. The CSP adds AdSense script, image, frame, and connection sources only when the ad settings are active.
+
+## Local quality checks
+
+Install pinned dependencies with `pip install -r requirements.txt`. Run `ruff check .` and `pytest` from the repository root; pytest is configured to import the project for the same bare command used in GitHub Actions. `bcrypt` is constrained below version 5 for compatibility with the current Passlib release.

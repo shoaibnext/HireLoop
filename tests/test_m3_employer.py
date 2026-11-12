@@ -10,19 +10,8 @@ def _csrf(response):
     return match.group(1)
 
 
-def _register(client, *, email, company):
-    page = client.get("/signup")
-    return client.post(
-        "/signup",
-        data={
-            "csrf_token": _csrf(page),
-            "email": email,
-            "password": "correct horse battery staple",
-            "company_name": company,
-            "website": "https://example.org",
-        },
-        follow_redirects=False,
-    )
+def _register(client, register_account, *, email, company):
+    return register_account(email=email, company=company)
 
 
 def _post_job(client, *, title="Senior Python Engineer"):
@@ -47,11 +36,10 @@ def _post_job(client, *, title="Senior Python Engineer"):
 
 
 def test_employer_can_post_then_admin_approve_and_feature(
-    client, db_session, monkeypatch
+    client, db_session, monkeypatch, register_account
 ):
     monkeypatch.setenv("ADMIN_EMAILS", "admin@example.test")
-    response = _register(
-        client, email="employer@example.test", company="Example Systems"
+    response = _register(client, register_account, email="employer@example.test", company="Example Systems"
     )
     assert response.status_code == 303
     cookie = response.headers["set-cookie"].lower()
@@ -83,8 +71,7 @@ def test_employer_can_post_then_admin_approve_and_feature(
         == 303
     )
     assert (
-        _register(
-            client, email="admin@example.test", company="Admin account"
+        _register(client, register_account, email="admin@example.test", company="Admin account"
         ).status_code
         == 303
     )
@@ -132,9 +119,9 @@ def test_employer_can_post_then_admin_approve_and_feature(
     assert "Featured" in client.get("/").text
 
 
-def test_non_owner_cannot_edit_job(client, db_session):
+def test_non_owner_cannot_edit_job(client, db_session, register_account):
     assert (
-        _register(client, email="first@example.test", company="First Co").status_code
+        _register(client, register_account, email="first@example.test", company="First Co").status_code
         == 303
     )
     assert _post_job(client, title="Owner-only position").status_code == 303
@@ -142,7 +129,7 @@ def test_non_owner_cannot_edit_job(client, db_session):
     dashboard = client.get("/employer/dashboard")
     client.post("/logout", data={"csrf_token": _csrf(dashboard)})
     assert (
-        _register(client, email="second@example.test", company="Second Co").status_code
+        _register(client, register_account, email="second@example.test", company="Second Co").status_code
         == 303
     )
     assert client.get(f"/employer/jobs/{job.id}/edit").status_code == 403
@@ -159,9 +146,9 @@ def test_non_owner_cannot_edit_job(client, db_session):
     assert job.title == "Owner-only position"
 
 
-def test_employer_can_sign_in_and_logout(client):
+def test_employer_can_sign_in_and_logout(client, register_account):
     assert (
-        _register(client, email="signin@example.test", company="Sign In Co").status_code
+        _register(client, register_account, email="signin@example.test", company="Sign In Co").status_code
         == 303
     )
     dashboard = client.get("/employer/dashboard")
@@ -204,10 +191,9 @@ def test_employer_can_sign_in_and_logout(client):
     assert client.get("/employer/dashboard", follow_redirects=False).status_code == 303
 
 
-def test_owner_can_edit_close_and_renew_a_job(client, db_session):
+def test_owner_can_edit_close_and_renew_a_job(client, db_session, register_account):
     assert (
-        _register(
-            client, email="owner-actions@example.test", company="Owner Actions"
+        _register(client, register_account, email="owner-actions@example.test", company="Owner Actions"
         ).status_code
         == 303
     )
@@ -256,7 +242,7 @@ def test_owner_can_edit_close_and_renew_a_job(client, db_session):
     assert job.expires_at is not None
 
 
-def test_post_forms_require_csrf_and_invalid_application_url_is_rejected(client):
+def test_post_forms_require_csrf_and_invalid_application_url_is_rejected(client, register_account):
     assert (
         client.post(
             "/login", data={"email": "a@example.test", "password": "wrong"}
@@ -264,7 +250,7 @@ def test_post_forms_require_csrf_and_invalid_application_url_is_rejected(client)
         == 403
     )
     assert (
-        _register(client, email="safe@example.test", company="Safe Co").status_code
+        _register(client, register_account, email="safe@example.test", company="Safe Co").status_code
         == 303
     )
     page = client.get("/post-job")
@@ -284,11 +270,10 @@ def test_post_forms_require_csrf_and_invalid_application_url_is_rejected(client)
     assert client.get("/pricing").status_code == 200
 
 
-def test_admin_can_reject_a_pending_job(client, db_session, monkeypatch):
+def test_admin_can_reject_a_pending_job(client, db_session, monkeypatch, register_account):
     monkeypatch.setenv("ADMIN_EMAILS", "admin-reject@example.test")
     assert (
-        _register(
-            client, email="reject-owner@example.test", company="Review Co"
+        _register(client, register_account, email="reject-owner@example.test", company="Review Co"
         ).status_code
         == 303
     )
@@ -299,8 +284,7 @@ def test_admin_can_reject_a_pending_job(client, db_session, monkeypatch):
         "/logout", data={"csrf_token": _csrf(dashboard)}, follow_redirects=False
     )
     assert (
-        _register(
-            client, email="admin-reject@example.test", company="Admin"
+        _register(client, register_account, email="admin-reject@example.test", company="Admin"
         ).status_code
         == 303
     )

@@ -115,7 +115,7 @@ def test_match_score_is_stable_and_explainable(seed_jobs):
 def test_no_badge_without_cv_and_match_badge_after_upload(client, db_session, seed_jobs):
     job = seed_jobs[0]
     detail = client.get(f"/jobs/{job.id}-senior-python-engineer")
-    assert "CV match" not in detail.text
+    assert 'class="hl-match-badge"' not in detail.text
     token = csrf(client.get("/upload-cv").text)
     client.post(
         "/upload-cv", data={"csrf_token": token},
@@ -126,7 +126,8 @@ def test_no_badge_without_cv_and_match_badge_after_upload(client, db_session, se
     assert "Matched skills: python" in matches.text
     assert "Skills to consider: fastapi" in matches.text
     assert "52% match" in matches.text
-    assert "52% CV match" in client.get(f"/jobs/{job.id}-senior-python-engineer").text
+    detail = client.get(f"/jobs/{job.id}-senior-python-engineer")
+    assert re.search(r'<span class="hl-match-badge">52% CV match</span>', detail.text)
 
 
 def test_delete_cv_removes_profile_and_cached_matches(client, db_session, seed_jobs):
@@ -142,7 +143,8 @@ def test_delete_cv_removes_profile_and_cached_matches(client, db_session, seed_j
     assert "deleted" in response.text
     assert db_session.query(CVProfile).count() == 0
     assert db_session.query(MatchCache).count() == 0
-    assert "CV match" not in client.get(f"/jobs/{seed_jobs[0].id}-senior-python-engineer").text
+    detail = client.get(f"/jobs/{seed_jobs[0].id}-senior-python-engineer")
+    assert 'class="hl-match-badge"' not in detail.text
 
 
 def test_expired_cv_and_its_cache_are_deleted(db_session):

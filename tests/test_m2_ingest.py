@@ -122,11 +122,11 @@ def test_level_and_skill_search_use_normalized_columns(client, db_session):
     db_session.commit()
     senior = client.get("/?level=senior")
     assert senior.status_code == 200
-    assert "1 jobs" in senior.text
+    assert "1 available" in senior.text
     assert "Platform Analyst</a>" in senior.text
     assert "Platform Analyst II" not in senior.text
     python = client.get("/?q=python")
-    assert "2 jobs" in python.text
+    assert "2 available" in python.text
 
 
 def test_cross_source_dedupe_keeps_earliest_posted_without_deleting(db_session):

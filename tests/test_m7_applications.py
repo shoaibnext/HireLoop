@@ -23,19 +23,8 @@ def docx_bytes(text: str) -> bytes:
     return buffer.getvalue()
 
 
-def register(client, email: str, company: str):
-    page = client.get("/signup")
-    return client.post(
-        "/signup",
-        data={
-            "csrf_token": csrf(page.text),
-            "email": email,
-            "password": "correct horse battery staple",
-            "company_name": company,
-            "website": "https://example.org",
-        },
-        follow_redirects=False,
-    )
+def register(register_account, email: str, company: str):
+    return register_account(email=email, company=company)
 
 
 def login(client, email: str):
@@ -47,8 +36,8 @@ def login(client, email: str):
     )
 
 
-def test_application_consent_scoring_owner_review_and_status_updates(client, db_session):
-    assert register(client, "owner@example.org", "Example Systems").status_code == 303
+def test_application_consent_scoring_owner_review_and_status_updates(client, db_session, register_account):
+    assert register(register_account, "owner@example.org", "Example Systems").status_code == 303
     user = db_session.query(User).filter_by(email="owner@example.org").one()
     employer = db_session.query(Employer).filter_by(user_id=user.id).one()
     job = Job(
@@ -142,7 +131,7 @@ def test_application_consent_scoring_owner_review_and_status_updates(client, db_
     assert application.status == "shortlisted"
 
     client.cookies.clear()
-    assert register(client, "other@example.org", "Other Company").status_code == 303
+    assert register(register_account, "other@example.org", "Other Company").status_code == 303
     other_review = client.get("/employer/applications")
     assert "candidate@example.net" not in other_review.text
     forbidden = client.post(

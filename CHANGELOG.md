@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Pinned bcrypt to the Passlib-compatible 4.x range, configured bare pytest imports, and completed Render production environment placeholders.
+- Updated account-flow tests to verify OTPs and added mocked Google OAuth success, state mismatch, unverified email, and access-denied coverage.
 - Added SkillzDunya's free Pakistan jobs API as an attributed ingestion source.
 - Applied the home screen's blue palette, rounded surfaces, form controls, and active navigation states across the app.
 - Added the home screen's blue-gradient hero treatment to About, Career Guides, Job Alerts, employer posting, sign-in, and account creation pages.

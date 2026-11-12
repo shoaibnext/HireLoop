@@ -5,6 +5,7 @@ from dataclasses import replace
 from datetime import UTC, datetime
 
 from jobboard import content, main
+from jobboard.config import settings
 from jobboard.models import Job
 
 
@@ -38,7 +39,7 @@ def test_skill_landing_noindex_until_ten_public_jobs_and_a_direct_job(client, db
     enough = client.get("/jobs/skill/python")
     assert enough.status_code == 200
     assert 'name="robots" content="noindex,follow"' not in enough.text
-    assert 'rel="canonical" href="http://127.0.0.1:8000/jobs/skill/python"' in enough.text
+    assert f'rel="canonical" href="{settings.site_url}/jobs/skill/python"' in enough.text
     assert "Compare current roles that name Python" in enough.text
 
 
@@ -82,12 +83,12 @@ def test_blog_metadata_sanitization_and_lastmod_sitemap(client, monkeypatch, tmp
     assert article.status_code == 200
     assert 'property="og:type" content="article"' in article.text
     assert 'property="og:title" content="Safe guide | HireLoop"' in article.text
-    assert 'rel="canonical" href="http://127.0.0.1:8000/blog/safe-guide"' in article.text
+    assert f'rel="canonical" href="{settings.site_url}/blog/safe-guide"' in article.text
     assert "<script>alert(1)</script>" not in article.text
     assert "javascript:alert" not in article.text
     sitemap = client.get("/sitemap.xml")
     assert sitemap.status_code == 200
-    assert "http://127.0.0.1:8000/blog/safe-guide" in sitemap.text
+    assert f"{settings.site_url}/blog/safe-guide" in sitemap.text
     assert "<lastmod>2026-02-03</lastmod>" in sitemap.text
 
 

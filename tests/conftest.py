@@ -1,3 +1,5 @@
+import re
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
@@ -35,6 +37,50 @@ def client(db_session):
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def register_account(client, monkeypatch):
+    """Register and OTP-verify an account using a captured mock email code."""
+    from jobboard import employer as employer_routes
+
+    sent_codes = {}
+
+    def capture_otp(user, code):
+        sent_codes[user.email] = code
+
+    monkeypatch.setattr(employer_routes, "_send_email_otp", capture_otp)
+
+    def register(email, company="", website="https://example.org"):
+        signup_page = client.get("/signup")
+        signup_csrf = re.search(
+            r'name="csrf_token" value="([^"]+)"', signup_page.text
+        ).group(1)
+        signup = client.post(
+            "/signup",
+            data={
+                "csrf_token": signup_csrf,
+                "email": email,
+                "password": "correct horse battery staple",
+                "account_type": "employer" if company else "candidate",
+                "company_name": company,
+                "website": website,
+            },
+            follow_redirects=False,
+        )
+        if signup.status_code != 303 or signup.headers.get("location") != "/verify-email":
+            return signup
+        verify_page = client.get("/verify-email")
+        verify_csrf = re.search(
+            r'name="csrf_token" value="([^"]+)"', verify_page.text
+        ).group(1)
+        return client.post(
+            "/verify-email",
+            data={"csrf_token": verify_csrf, "code": sent_codes[email]},
+            follow_redirects=False,
+        )
+
+    return register
 
 
 @pytest.fixture

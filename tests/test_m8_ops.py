@@ -13,31 +13,20 @@ def _csrf(html: str) -> str:
     return match.group(1)
 
 
-def _register(client, email: str, company: str):
-    page = client.get("/signup")
-    return client.post(
-        "/signup",
-        data={
-            "csrf_token": _csrf(page.text),
-            "email": email,
-            "password": "correct horse battery staple",
-            "company_name": company,
-            "website": "https://example.org",
-        },
-        follow_redirects=False,
-    )
+def _register(register_account, email: str, company: str):
+    return register_account(email=email, company=company)
 
 
-def test_admin_stats_are_private_and_show_live_counts(client, db_session, monkeypatch):
+def test_admin_stats_are_private_and_show_live_counts(client, db_session, monkeypatch, register_account):
     monkeypatch.setenv("ADMIN_EMAILS", "admin@example.org")
     assert client.get("/admin/stats").status_code == 403
-    assert _register(client, "employer@example.org", "Employer Co").status_code == 303
+    assert _register(register_account, "employer@example.org", "Employer Co").status_code == 303
     assert client.get("/admin/stats").status_code == 403
     employer_user = db_session.query(User).filter_by(email="employer@example.org").one()
     employer = db_session.query(Employer).filter_by(user_id=employer_user.id).one()
 
     client.cookies.clear()
-    assert _register(client, "admin@example.org", "Admin Co").status_code == 303
+    assert _register(register_account, "admin@example.org", "Admin Co").status_code == 303
     now = datetime.now(UTC)
     direct_job = Job(
         source="direct",
