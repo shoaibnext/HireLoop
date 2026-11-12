@@ -175,6 +175,7 @@ def require_user(request: Request, db: Session) -> User:
 def _page(request: Request, name: str, **context):
     context.setdefault("noindex", True)
     context.setdefault("csrf_token", csrf_token(request))
+    context.setdefault("email_delivery_verified", settings.email_delivery_verified)
     context.setdefault(
         "google_oauth_enabled",
         bool(settings.google_client_id and settings.google_client_secret),
@@ -335,7 +336,17 @@ async def _validate_job_form(
 @router.get("/signup", response_class=HTMLResponse)
 def signup_page(request: Request):
     error = _google_error_message(request.query_params.get("google_error", ""))
-    return _page(request, "signup.html", errors={"google": error} if error else {}, values={})
+    role = request.query_params.get("account_type", "candidate")
+    if role not in {"candidate", "employer"}:
+        role = "candidate"
+    coming_soon = request.query_params.get("email_signup") == "coming_soon"
+    return _page(
+        request,
+        "signup.html",
+        errors={"google": error} if error else {},
+        values={"account_type": role},
+        email_signup_coming_soon=coming_soon,
+    )
 
 
 def _google_error_message(error: str) -> str:
@@ -486,6 +497,8 @@ async def google_auth_callback(request: Request, db: Session = Depends(get_db)):
 @router.post("/signup", response_class=HTMLResponse)
 @limiter.limit("10/hour")
 async def signup(request: Request, db: Session = Depends(get_db)):
+    if not settings.email_delivery_verified:
+        return RedirectResponse("/signup?email_signup=coming_soon", status_code=303)
     form = await request.form()
     verify_csrf(request, str(form.get("csrf_token", "")))
     email = str(form.get("email", "")).strip().casefold()

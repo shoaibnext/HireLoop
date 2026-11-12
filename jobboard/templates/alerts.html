@@ -9,8 +9,11 @@
 {% set page_art_caption = 'Only when new matches arrive' %}
 {% include "_page_hero.html" %}
 <section class="mx-auto max-w-2xl rounded-2xl bg-white p-6 shadow">
-  <p class="mb-4">{{ message }}</p>
+  <p class="mb-4">{% if not email_delivery_verified and not preferences_token %}Email alerts coming soon.{% else %}{{ message }}{% endif %}</p>
   {% if error %}<p role="alert" class="mb-4 rounded bg-red-50 p-3">{{ error }}</p>{% endif %}
+  {% if not email_delivery_verified and not preferences_token %}
+  <p role="status" class="text-sm">Email delivery is being verified. Please check back soon.</p>
+  {% else %}
   {% if preferences_token %}<form method="post" action="/alerts/preferences/{{ preferences_token }}" class="grid gap-4">
   {% else %}<form method="post" action="/alerts" class="grid gap-4">{% endif %}
     <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
@@ -27,5 +30,6 @@
     <button class="min-h-11 rounded bg-indigo-700 px-4 text-white">{% if preferences_token %}Save preferences{% else %}Subscribe to alerts{% endif %}</button>
   </form>
   <p class="mt-4 text-sm">We send one daily email when new active jobs match your skills. Confirm your email before alerts begin. Every email includes an unsubscribe link.</p>
+  {% endif %}
 </section>
 {% endblock %}

@@ -1,7 +1,7 @@
 """Central environment configuration."""
 
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from dotenv import load_dotenv
 
@@ -26,6 +26,9 @@ class Settings:
     anthropic_model: str = os.getenv("ANTHROPIC_MODEL", "claude-haiku-5-5")
     email_api_key: str = os.getenv("EMAIL_API_KEY", "")
     email_from: str = os.getenv("EMAIL_FROM", "")
+    email_delivery_verified: bool = field(
+        default_factory=lambda: os.getenv("EMAIL_DELIVERY_VERIFIED", "1") != "0"
+    )
     google_client_id: str = os.getenv("GOOGLE_CLIENT_ID", "")
     google_client_secret: str = os.getenv("GOOGLE_CLIENT_SECRET", "")
     sentry_dsn: str = os.getenv("SENTRY_DSN", "")

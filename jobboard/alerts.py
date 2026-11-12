@@ -45,6 +45,7 @@ def _render(request: Request, *, message: str, error: str | None = None, **conte
             "message": message,
             "error": error,
             "values": {},
+            "email_delivery_verified": settings.email_delivery_verified,
             **context,
         },
     )
@@ -113,19 +114,20 @@ def _send_confirmation(subscription: AlertSubscription, confirm_token: str, unsu
 @router.get("/alerts", response_class=HTMLResponse)
 def alerts_page(request: Request):
     confirmed = request.query_params.get("confirmed") == "1"
-    return _render(
-        request,
-        message=(
-            "Your email is confirmed. You will receive daily alerts when new jobs match your preferences."
-            if confirmed
-            else "Get a daily email when new technology jobs match your skills."
-        ),
-    )
+    if not settings.email_delivery_verified:
+        message = "Email alerts coming soon."
+    elif confirmed:
+        message = "Your email is confirmed. You will receive daily alerts when new jobs match your preferences."
+    else:
+        message = "Get a daily email when new technology jobs match your skills."
+    return _render(request, message=message)
 
 
 @router.post("/alerts", response_class=HTMLResponse)
 @limiter.limit("3/hour")
 async def subscribe(request: Request, db: Session = Depends(get_db)):
+    if not settings.email_delivery_verified:
+        return _render(request, message="Email alerts coming soon.")
     form = await request.form()
     verify_csrf(request, str(form.get("csrf_token", "")))
     email = str(form.get("email", "")).strip().casefold()
