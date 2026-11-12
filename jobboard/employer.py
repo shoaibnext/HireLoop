@@ -407,7 +407,12 @@ async def google_auth_callback(request: Request, db: Session = Depends(get_db)):
     source = profile.get("source", "login")
     if request.query_params.get("error") == "access_denied":
         request.session.pop("google_signup_profile", None)
-        return RedirectResponse(f"/{source}?google_error=cancelled", status_code=303)
+        destination = (
+            "/signup?google_error=cancelled"
+            if source == "signup"
+            else "/login?google_error=cancelled"
+        )
+        return RedirectResponse(destination, status_code=303)
     try:
         google = _google_oauth_client()
         if google is None:
