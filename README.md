@@ -1,4 +1,4 @@
-# HireLoop
+# Kaamly.pk
 
 Server-rendered job platform for technology and AI jobs in Pakistan and remote roles open to Pakistani developers.
 
@@ -27,7 +27,7 @@ pytest
 
 ## Operations and backups
 
-The admin-only `/admin/stats` page summarizes job totals and active jobs by source, employer totals/new employers over 30 days, and application totals/recent applications. `/health` executes a database query and returns HTTP 503 when the database is unavailable; point an uptime monitor at `https://your-domain/health` and alert on any non-2xx response. Optionally set `SENTRY_DSN` to enable Sentry error reporting. HireLoop configures Sentry without default PII collection or performance tracing; leave the value empty to disable it.
+The admin-only `/admin/stats` page summarizes job totals and active jobs by source, employer totals/new employers over 30 days, and application totals/recent applications. `/health` executes a database query and returns HTTP 503 when the database is unavailable; point an uptime monitor at `https://your-domain/health` and alert on any non-2xx response. Optionally set `SENTRY_DSN` to enable Sentry error reporting. Kaamly.pk configures Sentry without default PII collection or performance tracing; leave the value empty to disable it.
 
 Back up the production database regularly and store backups encrypted with access limited to operators. Backups contain applicant email addresses and notes plus retained CV profile text, so apply the same privacy and retention controls as the database. For local SQLite, create a backup directory and use SQLite's online backup API (safe while the app is running):
 
@@ -56,7 +56,7 @@ GitHub Actions runs Ruff and pytest for pushes and pull requests. Never commit `
 
 Create a candidate or employer account at `/signup`, then verify the email with the six-digit code before opening the account. Codes expire after 10 minutes, allow five attempts, and can be resent with a cooldown. Configure `EMAIL_API_KEY` (Resend API key), `EMAIL_FROM` (verified sender), `SITE_URL`, and a long random `SECRET_KEY` so account verification mail can be delivered. Set `EMAIL_DELIVERY_VERIFIED=0` until sender verification is complete; this temporarily hides email/password signup and alert subscription while preserving Google sign-in. The default is `1`. For local development only, when using the default development secret on localhost, the OTP is shown on the verification screen. Existing accounts are treated as verified by the migration. Candidate accounts have a private account page at `/account` with CV matches and recent application statuses; employer accounts go to the posting dashboard. Passwords are hashed, sessions use signed HttpOnly cookies with SameSite=Lax, forms validate CSRF tokens, and signup/sign-in are rate limited. Apply the schema with `alembic upgrade head` before deploying.
 
-Google sign-in and sign-up use the server-side OpenID Connect flow. Create a Google OAuth client for a web application, add `${SITE_URL}/auth/google/callback` as an authorized redirect URI, and set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. New Google sign-ups can choose candidate or employer; employers must provide their company name. Google accounts with verified email addresses are marked verified on HireLoop.
+Google sign-in and sign-up use the server-side OpenID Connect flow. Create a Google OAuth client for a web application, add `${SITE_URL}/auth/google/callback` as an authorized redirect URI, and set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`. New Google sign-ups can choose candidate or employer; employers must provide their company name. Google accounts with verified email addresses are marked verified on Kaamly.pk.
 
 ## Employer posting and moderation
 
@@ -81,7 +81,7 @@ The ingester uses the Remotive and RemoteOK public feeds plus SkillzDunya's free
 
 ## CV matching and privacy
 
-At `/upload-cv`, upload a PDF or DOCX up to 5 MB to get explainable matches at `/matches`. HireLoop keeps extracted text and recognized skills only; it never saves the uploaded file. For signed-in candidates, CV profiles are linked to the account; anonymous CV profiles remain attached to a signed session. Both expire after 30 days and can be removed immediately with **Delete my CV**. CV data is not shared with employers unless you explicitly apply. If `ANTHROPIC_API_KEY` is configured, match explanations send Anthropic only a job title and matched/missing skill labels, not CV text. Without the key, HireLoop uses a deterministic explanation.
+At `/upload-cv`, upload a PDF or DOCX up to 5 MB to get explainable matches at `/matches`. Kaamly.pk keeps extracted text and recognized skills only; it never saves the uploaded file. For signed-in candidates, CV profiles are linked to the account; anonymous CV profiles remain attached to a signed session. Both expire after 30 days and can be removed immediately with **Delete my CV**. CV data is not shared with employers unless you explicitly apply. If `ANTHROPIC_API_KEY` is configured, match explanations send Anthropic only a job title and matched/missing skill labels, not CV text. Without the key, Kaamly.pk uses a deterministic explanation.
 
 Set the optional `ANTHROPIC_API_KEY` and `ANTHROPIC_MODEL` in the environment to enable generated explanations. A daily GitHub Actions cleanup workflow deletes expired CV data at 03:30 UTC; configure the repository `DATABASE_URL` secret. Run cleanup manually with `python cleanup_cvs.py` after `alembic upgrade head`.
 
@@ -91,7 +91,11 @@ Candidates can subscribe at `/alerts` with an email, recognized skills, and remo
 
 ## Applications and shortlisting
 
-Candidates can upload a CV, then apply to approved direct HireLoop jobs. Applying requires explicit consent to share the candidate's email, short note, and recognized CV skills with that employer; the original CV and extracted CV text are not sent. Employers review applications at `/employer/applications`, ranked by HireLoop's deterministic M4 match score with matched and missing skills shown, set new/shortlisted/rejected status, and use the reply link to contact candidates by email. Apply the schema with `alembic upgrade head` before deploying this feature.
+Candidates can upload a CV, then apply to approved direct Kaamly.pk jobs. Applying requires explicit consent to share the candidate's email, short note, and recognized CV skills with that employer; the original CV and extracted CV text are not sent. Employers review applications at `/employer/applications`, ranked by Kaamly.pk's deterministic M4 match score with matched and missing skills shown, set new/shortlisted/rejected status, and use the reply link to contact candidates by email. Apply the schema with `alembic upgrade head` before deploying this feature.
+
+## Seeker experience
+
+Search supports `posted=24h|3d|7d|14d` and `sort=relevance|newest`, while retaining the existing search parameters. Signed-in candidates can save or hide jobs, manage saved and application statuses at `/my-jobs`, add private notes, and configure target roles, skills, location, remote preference, and minimum salary at `/preferences`. Search history retains the latest five searches. Recommendations use only the candidate's CV skills and saved preferences; without either, the account page prompts the candidate to set them up. Apply the M9 schema with `alembic upgrade head`. These features do not send email and remain available with `EMAIL_DELIVERY_VERIFIED=0`.
 
 ## SEO pages, blog, and AdSense
 

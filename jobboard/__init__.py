@@ -1,1 +1,1 @@
-"""HireLoop job board application."""
+"""Kaamly.pk job board application."""

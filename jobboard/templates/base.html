@@ -3,17 +3,17 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}HireLoop — Tech jobs for Pakistan{% endblock %}</title>
+  <title>{% block title %}Kaamly.pk — Tech jobs for Pakistan{% endblock %}</title>
   <meta name="description" content="{% block meta_description %}Technology and AI jobs in Pakistan and remote roles open to Pakistani developers.{% endblock %}">
   {% if noindex %}<meta name="robots" content="noindex,follow">{% endif %}
   {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
-  <meta property="og:site_name" content="HireLoop">
-  <meta property="og:title" content="{% block og_title %}HireLoop — Tech jobs for Pakistan{% endblock %}">
+  <meta property="og:site_name" content="Kaamly.pk">
+  <meta property="og:title" content="{% block og_title %}Kaamly.pk — Tech jobs for Pakistan{% endblock %}">
   <meta property="og:description" content="{% block og_description %}{{ meta_description|default('Technology and AI jobs in Pakistan and remote roles open to Pakistani developers.') }}{% endblock %}">
   {% if canonical_url %}<meta property="og:url" content="{{ canonical_url }}">{% endif %}
   <meta property="og:type" content="{% block og_type %}website{% endblock %}">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="{{ meta_title|default('HireLoop — Tech jobs for Pakistan') }}">
+  <meta name="twitter:title" content="{{ meta_title|default('Kaamly.pk — Tech jobs for Pakistan') }}">
   <meta name="twitter:description" content="{{ meta_description|default('Technology and AI jobs in Pakistan and remote roles open to Pakistani developers.') }}">
   <script nonce="{{ request.state.csp_nonce }}" src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -97,12 +97,12 @@
     <symbol id="icon-sparkle" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 1.7 6.3L20 10l-6.3 1.7L12 18l-1.7-6.3L4 10l6.3-1.7L12 2Z"/><path d="m19 16 .8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16Z"/></symbol>
   </svg>
   <header class="hl-site-header"><nav class="hl-header-inner" aria-label="Main navigation">
-    <a class="hl-brand" href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}><span class="hl-brand-mark"><svg aria-hidden="true"><use href="#icon-briefcase"></use></svg></span>HireLoop</a>
+    <a class="hl-brand" href="/" {% if request.url.path == '/' %}aria-current="page"{% endif %}><span class="hl-brand-mark"><svg aria-hidden="true"><use href="#icon-briefcase"></use></svg></span>Kaamly.pk</a>
     <div class="hl-header-links"><a href="/about" {% if request.url.path == '/about' %}aria-current="page"{% endif %}>About</a><a href="/blog" {% if request.url.path.startswith('/blog') %}aria-current="page"{% endif %}>Career guides</a><a href="/alerts" {% if request.url.path == '/alerts' %}aria-current="page"{% endif %}>Job alerts</a><a href="/for-employers" {% if request.url.path == '/for-employers' %}aria-current="page"{% endif %}>For employers</a><a class="hl-header-post" href="{% if request.session.get('user_id') %}/account{% else %}/login{% endif %}" {% if request.url.path in ['/login', '/signup', '/account', '/employer/dashboard'] or request.url.path.startswith('/employer/') %}aria-current="page"{% endif %}>{% if request.session.get('user_id') %}My account{% else %}Sign in{% endif %}</a>{% if not request.session.get('user_id') %}<a class="hl-header-auth" href="/signup">Create account</a>{% endif %}</div>
   </nav></header>
   <a href="#main" class="sr-only focus:not-sr-only">Skip to content</a>
   <main id="main" class="hl-main">{% block content %}{% endblock %}</main>
-  <footer class="hl-site-footer"><a href="/privacy">Privacy</a><a href="/contact">Contact</a><span>HireLoop · Technology and AI jobs for Pakistan</span></footer>
+  <footer class="hl-site-footer"><a href="/privacy">Privacy</a><a href="/contact">Contact</a><span>Kaamly.pk · Technology and AI jobs for Pakistan</span></footer>
   <nav class="hl-bottom-nav" aria-label="Quick navigation"><a href="/" {% if request.url.path == '/' and not request.query_params %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="#icon-home"></use></svg><span>Home</span></a><a href="/#job-search" {% if request.url.path == '/' and request.query_params or request.url.path.startswith('/jobs/skill') or request.url.path.startswith('/jobs/city') %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="#icon-search"></use></svg><span>Search</span></a><a href="/matches" {% if request.url.path == '/matches' %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="#icon-sparkle"></use></svg><span>CV match</span></a><a href="/for-employers" {% if request.url.path in ['/for-employers', '/post-job', '/login', '/signup', '/pricing', '/employer/dashboard'] or request.url.path.startswith('/employer/') %}aria-current="page"{% endif %}><svg aria-hidden="true"><use href="#icon-user"></use></svg><span>Employer</span></a></nav>
 </body>
 </html>

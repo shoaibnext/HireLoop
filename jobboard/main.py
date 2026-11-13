@@ -1,11 +1,11 @@
-"""Server-rendered HireLoop MVP routes."""
+"""Server-rendered Kaamly.pk MVP routes."""
 
 import logging
 import re
 import secrets
 import xml.etree.ElementTree as ET
 from contextlib import asynccontextmanager
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import nh3
@@ -20,8 +20,18 @@ from starlette.middleware.sessions import SessionMiddleware
 
 from .config import settings
 from .content import get_blog_post, load_blog_posts
-from .models import Base, CVProfile, Employer, Job, MatchCache, engine, get_db
+from .models import (
+    Base,
+    CVProfile,
+    Employer,
+    Job,
+    MatchCache,
+    SeekerJobState,
+    engine,
+    get_db,
+)
 from .rate_limit import limiter
+from .seeker import router as seeker_router
 from .skills import strip_html
 
 logging.basicConfig(
@@ -64,7 +74,7 @@ async def lifespan(_app: FastAPI):
     yield
 
 
-app = FastAPI(title="HireLoop", lifespan=lifespan)
+app = FastAPI(title="Kaamly.pk", lifespan=lifespan)
 if settings.sentry_dsn:
     import sentry_sdk
     from sentry_sdk.integrations.fastapi import FastApiIntegration
@@ -125,6 +135,8 @@ def job_filters(
     types: list[str],
     levels: list[str],
     has_salary: bool,
+    posted: str = "",
+    user_id: int | None = None,
 ):
     now = datetime.now(UTC)
     query = db.query(Job).filter(
@@ -132,6 +144,11 @@ def job_filters(
         or_(Job.source != "direct", Job.status == "approved"),
         or_(Job.expires_at.is_(None), Job.expires_at > now),
     )
+    if user_id is not None:
+        from .models import SeekerJobState
+
+        hidden = db.query(SeekerJobState.job_id).filter_by(user_id=user_id, is_hidden=True)
+        query = query.filter(~Job.id.in_(hidden))
     if q:
         term = f"%{q.strip()}%"
         query = query.filter(
@@ -162,6 +179,12 @@ def job_filters(
                 Job.salary_min.is_not(None),
                 Job.salary_max.is_not(None),
             )
+        )
+    posted_days = {"24h": 1, "3d": 3, "7d": 7, "14d": 14}.get(posted)
+    if posted_days:
+        query = query.filter(
+            func.coalesce(Job.posted_at, Job.created_at)
+            >= datetime.now(UTC) - timedelta(days=posted_days)
         )
     return query
 
@@ -244,21 +267,57 @@ def home(
     types: list[str] = Query(default=[], alias="type"),
     levels: list[str] = Query(default=[], alias="level"),
     has_salary: bool = False,
+    posted: str = "",
+    sort: str = "relevance",
     page: int = Query(default=1, ge=1),
     db: Session = Depends(get_db),
 ):
-    filtered = bool(q or location or remote or types or levels or has_salary)
-    query = job_filters(db, q, location, remote, types, levels, has_salary)
-    total = query.count()
-    jobs = (
-        query.order_by(
-            case((Job.featured_until > datetime.now(UTC), 0), else_=1),
-            func.coalesce(Job.posted_at, Job.created_at).desc(),
-        )
-        .offset((page - 1) * 20)
-        .limit(20)
-        .all()
+    if posted not in {"", "24h", "3d", "7d", "14d"}:
+        posted = ""
+    if sort not in {"relevance", "newest"}:
+        sort = "relevance"
+    from .employer import csrf_token, current_user
+    from .models import SeekerJobState
+    from .seeker import recent_search_items, remember_search
+
+    user = current_user(request, db)
+    seeker = user if user and user.role == "candidate" else None
+    params = request.query_params
+    if seeker:
+        remember_search(db, seeker, {key: params.getlist(key) for key in ("q", "location", "remote", "type", "level", "has_salary", "posted", "sort")})
+        db.commit()
+    filtered = bool(
+        q or location or remote or types or levels or has_salary or posted
+        or any(key in params for key in ("q", "location", "remote", "type", "level", "has_salary", "posted", "sort"))
+        or page > 1
     )
+    query = job_filters(db, q, location, remote, types, levels, has_salary, posted, seeker.id if seeker else None)
+    total = query.count()
+    if sort == "relevance" and q.strip():
+        candidates = query.all()
+        terms = [term.casefold() for term in q.split() if term]
+
+        def relevance(job):
+            fields = (
+                (job.title or "").casefold(),
+                f"{job.skills or ''} {job.tags or ''}".casefold(),
+                (job.company or "").casefold(),
+                strip_html(job.description or "").casefold(),
+            )
+            for priority, value in enumerate((1000, 100, 10, 1)):
+                matches = sum(term in fields[priority] for term in terms)
+                if matches:
+                    return value * matches
+            return 0
+
+        candidates.sort(key=lambda job: (-relevance(job), -int(bool(job.featured_until and job.featured_until > datetime.now(UTC))), -_as_utc(job.posted_at or job.created_at).timestamp(), job.id))
+        jobs = candidates[(page - 1) * 20 : page * 20]
+    else:
+        if sort == "newest":
+            ordering = (func.coalesce(Job.posted_at, Job.created_at).desc(),)
+        else:
+            ordering = (case((Job.featured_until > datetime.now(UTC), 0), else_=1), func.coalesce(Job.posted_at, Job.created_at).desc())
+        jobs = query.order_by(*ordering).offset((page - 1) * 20).limit(20).all()
     cv_key = _cv_session_hash(request)
     profile = db.query(CVProfile).filter_by(session_key_hash=cv_key).one_or_none() if cv_key else None
     if profile and _as_utc(profile.expires_at) <= datetime.now(UTC):
@@ -278,6 +337,8 @@ def home(
             "types": types,
             "levels": levels,
             "has_salary": has_salary,
+            "posted": posted,
+            "sort": sort,
             "page": page,
             "total": total,
             "pages": max(1, (total + 19) // 20),
@@ -290,9 +351,12 @@ def home(
             },
             "contact_email": settings.contact_email,
             "cv_exists": profile is not None,
+            "csrf_token": csrf_token(request),
+            "saved_job_ids": {row[0] for row in db.query(SeekerJobState.job_id).filter_by(user_id=seeker.id, is_saved=True).all()} if seeker else set(),
+            "recent_searches": recent_search_items(db, seeker.id) if seeker else [],
             "match_scores": match_scores,
             "canonical_url": f"{settings.site_url}/" if not filtered else None,
-            "meta_title": "Technology and AI jobs in Pakistan | HireLoop",
+            "meta_title": "Technology and AI jobs in Pakistan | Kaamly.pk",
             "meta_description": "Search active technology and AI jobs in Pakistan and remote roles open to Pakistani developers.",
             "skill_landing_links": [
                 (slug, SKILL_DISPLAY.get(skill, skill.title()), skill)
@@ -335,6 +399,15 @@ def _landing_response(
     location: str = "",
     page: int = 1,
 ):
+    from .employer import csrf_token, current_user
+    from .models import SeekerJobState
+    from .seeker import recent_search_items
+
+    user = current_user(request, db)
+    seeker = user if user and user.role == "candidate" else None
+    if seeker:
+        hidden = db.query(SeekerJobState.job_id).filter_by(user_id=seeker.id, is_hidden=True)
+        query = query.filter(~Job.id.in_(hidden))
     total = query.count()
     direct_count = query.filter(Job.source == "direct").count()
     indexable = total >= 10 and direct_count >= 1
@@ -379,12 +452,17 @@ def _landing_response(
             },
             "contact_email": settings.contact_email,
             "cv_exists": profile is not None,
+            "csrf_token": csrf_token(request),
+            "saved_job_ids": {row[0] for row in db.query(SeekerJobState.job_id).filter_by(user_id=seeker.id, is_saved=True).all()} if seeker else set(),
+            "recent_searches": recent_search_items(db, seeker.id) if seeker else [],
+            "posted": "",
+            "sort": "relevance",
             "match_scores": match_scores,
             "landing_title": title,
             "landing_intro": intro,
             "landing_breadcrumb_ld": _breadcrumb_data(title, canonical_url),
             "form_action": "/",
-            "meta_title": f"{title} jobs | HireLoop",
+            "meta_title": f"{title} jobs | Kaamly.pk",
             "meta_description": intro,
             "canonical_url": canonical_url,
             **_ads_context(),
@@ -466,6 +544,14 @@ def job_detail(job_ref: str, request: Request, db: Session = Depends(get_db)):
     if profile and _as_utc(profile.expires_at) <= datetime.now(UTC):
         profile = None
     cached_match = db.query(MatchCache).filter_by(cv_id=profile.id, job_id=job.id).one_or_none() if profile else None
+    from .employer import csrf_token, current_user
+
+    user = current_user(request, db)
+    seeker_state = (
+        db.query(SeekerJobState).filter_by(user_id=user.id, job_id=job.id).one_or_none()
+        if user and user.role == "candidate"
+        else None
+    )
     return templates.TemplateResponse(
         request=request,
         name="job_detail.html",
@@ -480,6 +566,8 @@ def job_detail(job_ref: str, request: Request, db: Session = Depends(get_db)):
             "contact_email": settings.contact_email,
             "match_score": cached_match.score if cached_match else None,
             "application_submitted": request.query_params.get("application") == "sent",
+            "is_saved": bool(seeker_state and seeker_state.is_saved),
+            "csrf_token": csrf_token(request),
         },
     )
 
@@ -500,7 +588,7 @@ def static_page(request: Request):
         )
     pages = {
         "about": (
-            "About HireLoop",
+            "About Kaamly.pk",
             "Find technology and AI roles in Pakistan and remote opportunities open to Pakistani developers.",
         ),
         "contact": ("Contact", f"Contact us at {settings.contact_email}."),
@@ -539,7 +627,7 @@ def blog_index(request: Request):
             "posts": load_blog_posts(),
             "noindex": False,
             "canonical_url": f"{settings.site_url}/blog",
-            "meta_title": "Career guides for technology roles | HireLoop",
+            "meta_title": "Career guides for technology roles | Kaamly.pk",
             "meta_description": description,
             **_ads_context(),
         },
@@ -559,7 +647,7 @@ def blog_article(slug: str, request: Request):
             "post": post,
             "noindex": False,
             "canonical_url": canonical_url,
-            "meta_title": f"{post.title} | HireLoop",
+            "meta_title": f"{post.title} | Kaamly.pk",
             "meta_description": post.description,
             **_ads_context(),
         },
@@ -735,6 +823,7 @@ app.include_router(employer_router)
 app.include_router(cv_router)
 app.include_router(alerts_router)
 app.include_router(applications_router)
+app.include_router(seeker_router)
 
 
 def _cv_session_hash(request: Request) -> str | None:

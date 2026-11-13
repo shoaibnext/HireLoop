@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Admin job moderation — HireLoop{% endblock %}
+{% block title %}Admin job moderation — Kaamly.pk{% endblock %}
 {% block content %}
 <section class="rounded-2xl bg-white p-6 shadow"><h1 class="text-3xl font-bold">Direct job moderation</h1><p class="mt-2"><a class="text-indigo-800 underline" href="/admin/stats">Operations stats</a></p>
   {% for job in jobs %}<article class="mt-4 rounded-xl border p-4"><h2 class="text-xl font-semibold">{{ job.title }}</h2><p>{{ job.company }} · {{ job.status|capitalize }}{% if job.is_paid %} · Paid{% endif %}</p><p>{{ job.location }}</p>{% if job.moderation_note %}<p>Moderation note: {{ job.moderation_note }}</p>{% endif %}

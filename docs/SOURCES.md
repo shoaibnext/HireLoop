@@ -15,12 +15,12 @@ Recheck each source's published terms before changing ingestion behavior.
 - API: [RemoteOK JSON feed](https://remoteok.com/api); its [FAQ](https://remoteok.com/faq) documents the public feed.
 - Terms excerpt: “credit Remote OK and link back to each original job post URL”.
 - Attribution: every RemoteOK listing links to its original job URL with a normal followed link and says “via RemoteOK”.
-- Request identity and rate limit: send a descriptive HireLoop `User-Agent`; wait at least 1 second between requests.
+- Request identity and rate limit: send a descriptive Kaamly.pk `User-Agent`; wait at least 1 second between requests.
 
 ## SkillzDunya
 
 - API: [SkillzDunya Pakistan Jobs API](https://skillzdunya.com/api/v1/jobs); API usage and attribution are documented on its [Jobs API page](https://skillzdunya.com/jobs-api).
 - Terms excerpt: “The data is free to read, quote, cite and build on” and “Attribute it to SkillzDunya and link to the canonical job page”.
-- Attribution: each HireLoop listing names SkillzDunya and links to the returned canonical job page URL. The listing's official source URL remains in its description when provided.
-- Rate limit: API documentation states 60 requests per minute per IP. HireLoop makes one request per daily ingestion run and requests at most 100 records.
+- Attribution: each Kaamly.pk listing names SkillzDunya and links to the returned canonical job page URL. The listing's official source URL remains in its description when provided.
+- Rate limit: API documentation states 60 requests per minute per IP. Kaamly.pk makes one request per daily ingestion run and requests at most 100 records.
 - Coverage: Pakistan government and private vacancy advertisements, not Google Jobs results. Listings may span roles outside technology; applicants should verify deadlines and eligibility at the linked official source.

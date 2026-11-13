@@ -57,7 +57,7 @@ def test_application_consent_scoring_owner_review_and_status_updates(client, db_
     db_session.commit()
 
     detail = client.get(f"/jobs/{job.id}-senior-python-engineer")
-    assert "Apply through HireLoop" in detail.text
+    assert "Apply through Kaamly.pk" in detail.text
     apply_page = client.get(f"/jobs/{job.id}/apply")
     assert "Upload a CV before applying" in apply_page.text
     no_csrf = client.post(f"/jobs/{job.id}/apply", data={"email": "candidate@example.net"})

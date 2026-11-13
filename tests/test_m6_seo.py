@@ -82,7 +82,7 @@ def test_blog_metadata_sanitization_and_lastmod_sitemap(client, monkeypatch, tmp
     article = client.get("/blog/safe-guide")
     assert article.status_code == 200
     assert 'property="og:type" content="article"' in article.text
-    assert 'property="og:title" content="Safe guide | HireLoop"' in article.text
+    assert 'property="og:title" content="Safe guide | Kaamly.pk"' in article.text
     assert f'rel="canonical" href="{settings.site_url}/blog/safe-guide"' in article.text
     assert "<script>alert(1)</script>" not in article.text
     assert "javascript:alert" not in article.text

@@ -1,6 +1,6 @@
-# HireLoop: Build Spec for Codex (single source of truth)
+# Kaamly.pk: Build Spec for Codex (single source of truth)
 
-HireLoop is an AI-assisted job platform for tech and AI jobs in Pakistan plus remote roles open to Pakistani developers. Owner: solo founder (Python/FastAPI developer). Goal: launch fast, earn from employer payments first and AdSense second.
+Kaamly.pk is an AI-assisted job platform for tech and AI jobs in Pakistan plus remote roles open to Pakistani developers. Owner: solo founder (Python/FastAPI developer). Goal: launch fast, earn from employer payments first and AdSense second.
 
 ## 0. How you must work
 1. Read this whole file first. Follow the milestones in order (M1 to M4 = launch; M5+ = post-launch). Do not start a milestone before the previous one passes its acceptance checks.
@@ -10,7 +10,7 @@ HireLoop is an AI-assisted job platform for tech and AI jobs in Pakistan plus re
 5. When this spec is silent, choose the simplest option that satisfies section 5 (hard rules) and note the decision in `docs/DECISIONS.md`.
 
 ## 1. Product
-- **Seekers** (free): browse and search jobs, filter, view job detail, apply (on the source site, or on HireLoop for direct jobs), upload a CV to see match scores, subscribe to daily email alerts.
+- **Seekers** (free): browse and search jobs, filter, view job detail, apply (on the source site, or on Kaamly.pk for direct jobs), upload a CV to see match scores, subscribe to daily email alerts.
 - **Employers** (paid): post jobs (featured option), receive applications ranked by AI match.
 - **Supply**: (a) aggregated remote jobs from sources whose terms allow it, (b) direct employer posts (the SEO and revenue core).
 - **Revenue order**: 1) paid or featured job posts (PKR 3,000 to 10,000, collected manually via bank transfer/JazzCash/Easypaisa, admin flips a flag), 2) AI shortlisting for employers, 3) AdSense (bonus, after approval).
@@ -97,10 +97,21 @@ Python 3.12, FastAPI, SQLAlchemy 2.0 + Alembic, Jinja2 server-rendered pages, Ta
 - AdSense: render ad units only when `ADS_ENABLED=1`, only on list and blog pages, never on forms/CV/employer pages.
 
 ### M7. Applications and AI shortlisting (paid product)
-- Seekers can apply to direct jobs on HireLoop with their stored CV skills plus a short note; employers see applicants ranked by match with the matched skills, can change status (new, shortlisted, rejected) and message the candidate through an emailed reply-to link. Candidates are told their CV is shared on apply.
+- Seekers can apply to direct jobs on Kaamly.pk with their stored CV skills plus a short note; employers see applicants ranked by match with the matched skills, can change status (new, shortlisted, rejected) and message the candidate through an emailed reply-to link. Candidates are told their CV is shared on apply.
 
 ### M8. Ops
 - Admin stats page (jobs by source, new employers, applications), Sentry (optional), DB backup instructions, uptime check on `/health`.
+
+### M9. Seeker experience
+- Search: add `posted` windows (24h, 3d, 7d, 14d), sort (`relevance`, `newest`), and deterministic relevance ranking (title > skills/tags > company > description). Preserve all existing query parameters and keep every filtered URL `noindex,follow`.
+- Saved jobs: authenticated seekers can save/unsave jobs from cards and details with CSRF-protected POSTs and no-JavaScript forms. Logged-out seekers are redirected to sign in with a fixed local return path to the job.
+- My Jobs at `/my-jobs`: show Saved, Applied, Interviewing, Offer, and Rejected tabs/counts. Kaamly.pk applications appear automatically as Applied; aggregated jobs can be marked applied with editable status and private notes. All state changes are CSRF-protected POSTs.
+- Preferences: authenticated seekers can save target roles, normalized skills, city or remote preference, and minimum salary/currency (PKR or USD). Use preferences for recommendations and search defaults where appropriate.
+- Recommendations: show at most 10 active jobs ranked by actual overlap with account CV skills and/or saved preferences; display matched skills. If neither CV nor preferences exist, show an honest setup prompt. Never fabricate scores, jobs, skills, or counts.
+- Hide jobs: a seeker can hide a job from their own lists and recommendations and undo this from My Jobs. Keep the last five searches per account with a clear action.
+- Email independence: all M9 features must work with `EMAIL_DELIVERY_VERIFIED=0`; do not send email or require email configuration.
+- Add an Alembic migration and tests for all behavior, including CSRF and cross-account authorization (users cannot read/change another user's saved jobs, notes, preferences, or private job states). Follow the design system and accessibility rules in section 4.
+- **Accept**: existing query parameters remain compatible; search filters/sorts/ranking work; saves, application states, notes, hides/undo, search history, preferences, and recommendations persist securely per user; no-email mode works; `ruff check .` and bare `pytest` pass.
 
 ## 7. Environment variables
 `DATABASE_URL, SITE_URL, SECRET_KEY, CONTACT_EMAIL, ADMIN_EMAILS, ADS_ENABLED, ANTHROPIC_API_KEY (optional), EMAIL_API_KEY (M5), SENTRY_DSN (optional)`. Provide `.env.example`; never commit secrets.

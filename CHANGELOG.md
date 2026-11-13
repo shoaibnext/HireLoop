@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Added seeker search ranking and posted-date filters, saved/hidden jobs, per-account application tracking and private notes, search history, preferences, and skill-overlap recommendations.
+- Added migration `0010_seeker_experience`; seeker features require no email delivery and remain usable when `EMAIL_DELIVERY_VERIFIED=0`.
 - Added `EMAIL_DELIVERY_VERIFIED` to gate email/password signup and new alert subscriptions until email delivery is verified, while preserving Google sign-in and existing account access.
 - Pinned bcrypt to the Passlib-compatible 4.x range, configured bare pytest imports, and completed Render production environment placeholders.
 - Updated account-flow tests to verify OTPs and added mocked Google OAuth success, state mismatch, unverified email, and access-denied coverage.
@@ -11,7 +13,7 @@
 - Added candidate registration and sign-in, account-linked CV profiles, and a job seeker account page while keeping employer accounts intact.
 - Added six-digit email OTP verification to candidate and employer signup, with expiry, attempt limits, resend cooldowns, and verified-account sign-in checks.
 - Added Google OpenID Connect sign-in/sign-up buttons for candidate and employer accounts.
-- Replaced the short About placeholder with a complete HireLoop overview covering job search, CV privacy, sources, alerts, and employer posting.
+- Replaced the short About placeholder with a complete Kaamly.pk overview covering job search, CV privacy, sources, alerts, and employer posting.
 
 ## M8 — Operations
 - Added an admin-only operations page with jobs by source, active job counts, new employers, and application totals.

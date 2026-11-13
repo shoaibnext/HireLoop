@@ -154,7 +154,7 @@ def test_resend_http_request_is_mocked_and_idempotent(monkeypatch):
         captured.update(url=url, **kwargs)
         return Response()
 
-    monkeypatch.setattr(alerts, "settings", SimpleNamespace(email_api_key="key", email_from="HireLoop <alerts@example.org>"))
+    monkeypatch.setattr(alerts, "settings", SimpleNamespace(email_api_key="key", email_from="Kaamly.pk <alerts@example.org>"))
     monkeypatch.setattr(alerts.httpx, "post", fake_post)
     alerts.send_email("person@example.org", "Daily alerts", "<p>New job</p>", idempotency_key="digest-1", unsubscribe_url="https://hireloop.example/alerts/unsubscribe/token")
     assert captured["url"] == "https://api.resend.com/emails"

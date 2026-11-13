@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}{{ meta_title|default('Tech jobs in Pakistan | HireLoop') }}{% endblock %}
+{% block title %}{{ meta_title|default('Tech jobs in Pakistan | Kaamly.pk') }}{% endblock %}
 {% block meta_description %}{{ meta_description|default('Find technology and AI jobs in Pakistan and remote roles open to Pakistani developers.') }}{% endblock %}
-{% block og_title %}{{ meta_title|default('Tech jobs in Pakistan | HireLoop') }}{% endblock %}
+{% block og_title %}{{ meta_title|default('Tech jobs in Pakistan | Kaamly.pk') }}{% endblock %}
 {% block content %}
 {% if landing_breadcrumb_ld %}<script nonce="{{ request.state.csp_nonce }}" type="application/ld+json">{{ landing_breadcrumb_ld|tojson }}</script>{% endif %}
 
@@ -28,16 +28,19 @@
     <div class="hl-filter-popover">
       <fieldset><legend>Experience level</legend><div class="hl-filter-options">{% for level in ['junior', 'mid', 'senior'] %}<label><input type="checkbox" name="level" value="{{ level }}" {% if level in levels %}checked{% endif %}> {{ level|capitalize }}</label>{% endfor %}</div></fieldset>
       <fieldset><legend>Employment type</legend><div class="hl-filter-options">{% for job_type in ['full-time', 'part-time', 'contract', 'freelance', 'internship'] %}<label><input type="checkbox" name="type" value="{{ job_type }}" {% if job_type in types %}checked{% endif %}> {{ job_type|replace('-', ' ')|capitalize }}</label>{% endfor %}</div></fieldset>
+      <label class="hl-auth-label" for="posted-window">Posted within<select id="posted-window" name="posted" class="min-h-11 w-full">{% for window, label in [('', 'Any time'), ('24h', '24 hours'), ('3d', '3 days'), ('7d', '7 days'), ('14d', '14 days')] %}<option value="{{ window }}" {% if posted == window %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+      <label class="hl-auth-label" for="sort-order">Sort by<select id="sort-order" name="sort" class="min-h-11 w-full"><option value="relevance" {% if sort == 'relevance' %}selected{% endif %}>Relevance</option><option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option></select></label>
       <label class="hl-filter-check"><input type="checkbox" name="remote" value="true" {% if remote %}checked{% endif %}> Remote roles</label>
       <label class="hl-filter-check"><input type="checkbox" name="has_salary" value="true" {% if has_salary %}checked{% endif %}> Salary listed</label>
       <button type="submit" class="hl-filter-apply">Apply filters</button>
     </div>
   </details>
 </form>
+{% if recent_searches %}<section class="mx-auto mt-3 flex max-w-6xl flex-wrap items-center gap-2" aria-label="Recent searches"><strong class="text-sm">Recent searches:</strong>{% for search in recent_searches %}<a class="inline-flex min-h-11 items-center rounded-full border border-slate-200 bg-white px-3 text-sm text-slate-700" href="{{ search.url }}">{{ search.label }}</a>{% endfor %}<form method="post" action="/recent-searches/clear"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="min-h-11 rounded-lg px-3 text-sm font-semibold text-slate-700 underline">Clear searches</button></form></section>{% endif %}
 
 {% if ads_enabled %}{% include "_ad_unit.html" %}{% endif %}
 
-{% if not q and not location and not remote and not types and not levels and not has_salary %}
+{% if not q and not location and not remote and not types and not levels and not has_salary and not posted %}
 <section class="hl-section" aria-labelledby="category-heading">
   <div class="hl-section-heading"><div><p class="hl-eyebrow">EXPLORE YOUR NEXT MOVE</p><h2 id="category-heading">Popular categories</h2></div><a href="#jobs" class="hl-text-link">Browse all <svg aria-hidden="true"><use href="#icon-arrow"></use></svg></a></div>
   <div class="hl-category-grid">
@@ -52,7 +55,7 @@
 {% endif %}
 
 <section id="jobs" class="hl-section" aria-labelledby="jobs-heading">
-  <div class="hl-section-heading"><div><p class="hl-eyebrow">{{ 'SEARCH RESULTS' if q or location or remote or types or levels or has_salary else 'HAND-PICKED FOR YOUR SEARCH' }}</p><h2 id="jobs-heading">{{ 'Jobs matching your filters' if q or location or remote or types or levels or has_salary else 'Recommended jobs' }}</h2></div>{% if total %}<span class="hl-count-pill">{{ total }} available</span>{% endif %}</div>
+  <div class="hl-section-heading"><div><p class="hl-eyebrow">{{ 'SEARCH RESULTS' if q or location or remote or types or levels or has_salary or posted else 'HAND-PICKED FOR YOUR SEARCH' }}</p><h2 id="jobs-heading">{{ 'Jobs matching your filters' if q or location or remote or types or levels or has_salary or posted else 'Recommended jobs' }}</h2></div>{% if total %}<span class="hl-count-pill">{{ total }} available</span>{% endif %}</div>
   <div class="hl-job-grid">
     {% for job in jobs %}
     <article class="hl-job-card">
@@ -65,6 +68,8 @@
       {% if job.source == 'direct' and job.salary_currency and (job.salary_min is not none or job.salary_max is not none) %}<p class="hl-job-salary">{{ job.salary_currency }}{% if job.salary_min is not none %} {{ "{:,.0f}".format(job.salary_min) }}{% endif %}{% if job.salary_min is not none and job.salary_max is not none %} to{% endif %}{% if job.salary_max is not none %} {{ "{:,.0f}".format(job.salary_max) }}{% endif %}<span> / month</span></p>{% elif job.salary %}<p class="hl-job-salary">{{ job.salary }}</p>{% endif %}
       {% if job.skills %}<div class="hl-skill-tags">{% for skill in job.skills.split(',')[:4] %}<span>{{ skill|trim }}</span>{% endfor %}</div>{% endif %}
       <div class="hl-job-card-footer"><span class="hl-job-source">{% if job.source == 'remotive' %}Listed via <a href="{{ job.source_url }}" rel="nofollow">Remotive</a>{% elif job.source == 'remoteok' %}Listed via <a href="{{ job.source_url }}">RemoteOK</a>{% elif job.source == 'skillzdunya' %}Listed via <a href="{{ job.source_url }}" rel="nofollow">SkillzDunya</a>{% else %}Direct employer post{% endif %}</span><a class="hl-card-arrow" href="/jobs/{{ job.id }}-{{ job.title|lower|replace(' ', '-') }}" aria-label="View {{ job.title }} at {{ job.company }}"><svg aria-hidden="true"><use href="#icon-arrow"></use></svg></a></div>
+      <div class="mt-3 flex flex-wrap gap-2"><form method="post" action="/jobs/{{ job.id }}/save"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="inline-flex min-h-11 items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 font-semibold text-slate-700" type="submit" aria-label="{{ 'Remove saved job' if job.id in saved_job_ids else 'Save job' }}"><svg aria-hidden="true" viewBox="0 0 24 24" width="18" height="18" fill="{% if job.id in saved_job_ids %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="1.8"><path d="M20.8 8.7c0 5.1-8.8 10.4-8.8 10.4S3.2 13.8 3.2 8.7a4.6 4.6 0 0 1 8.8-1.9 4.6 4.6 0 0 1 8.8 1.9Z"/></svg>{{ 'Saved' if job.id in saved_job_ids else 'Save' }}</button></form><form method="post" action="/jobs/{{ job.id }}/hide"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="inline-flex min-h-11 items-center rounded-xl px-3 font-semibold text-slate-600 underline" type="submit">Not interested</button></form></div>
+      {% if job.source != 'direct' %}<form class="mt-2" method="post" action="/jobs/{{ job.id }}/state"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="inline-flex min-h-11 items-center rounded-xl border border-slate-200 bg-white px-3 font-semibold text-slate-700" name="quick_apply" value="1" type="submit">I applied</button><span class="ml-2 text-sm text-slate-600">Track privately in <a class="underline" href="/my-jobs">My Jobs</a></span></form>{% endif %}
     </article>
     {% else %}<div class="hl-empty-state"><span class="hl-empty-icon"><svg aria-hidden="true"><use href="#icon-search"></use></svg></span><h3>No jobs found</h3><p>Try another skill or location, or clear a filter to see more roles.</p><a href="/" class="hl-search-button">Clear search</a></div>{% endfor %}
   </div>

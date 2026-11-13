@@ -11,7 +11,7 @@ Remote work listings can have different location rules. A role marked â€œremoteâ
 
 Write down the role names, technologies, and work arrangements you are looking for. A short list makes it easier to compare roles and refine search terms when results are too broad.
 
-On HireLoop, use the skill and location filters to narrow current listings. Open the original posting and confirm that applicants based in Pakistan are eligible.
+On Kaamly.pk, use the skill and location filters to narrow current listings. Open the original posting and confirm that applicants based in Pakistan are eligible.
 
 ## Make each application easy to review
 

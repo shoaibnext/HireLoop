@@ -235,6 +235,15 @@ def matches(request: Request, db: Session = Depends(get_db)):
     profile = _profile(request, db)
     if not profile:
         return _render(request, "matches.html", profile=None, matches=[])
+    user = current_user(request, db)
+    hidden_ids = set()
+    if user:
+        from .models import SeekerJobState
+
+        hidden_ids = {
+            row.job_id
+            for row in db.query(SeekerJobState.job_id).filter_by(user_id=user.id, is_hidden=True).all()
+        }
     preferences = request.session.get("cv_preferences", {})
     cv_skills = [s for s in (profile.skills or "").split(",") if s]
     cv_level = detect_level(profile.extracted_text)
@@ -242,6 +251,7 @@ def matches(request: Request, db: Session = Depends(get_db)):
     recent = db.query(Job).filter(
         Job.is_active.is_(True), or_(Job.source != "direct", Job.status == "approved"),
         or_(Job.expires_at.is_(None), Job.expires_at > now),
+        ~Job.id.in_(hidden_ids) if hidden_ids else True,
     ).order_by(func.coalesce(Job.posted_at, Job.created_at).desc()).limit(200).all()
     rows = []
     fresh_rows = set()
@@ -282,6 +292,9 @@ def candidate_account(request: Request, db: Session = Depends(get_db)):
     if user.role == "employer":
         return RedirectResponse("/employer/dashboard", status_code=303)
     profile = _profile(request, db)
+    from .seeker import recommendations
+
+    recommended_jobs, has_recommendation_inputs = recommendations(db, user)
     applications = (
         db.query(Application, Job)
         .join(Job, Job.id == Application.job_id)
@@ -296,6 +309,8 @@ def candidate_account(request: Request, db: Session = Depends(get_db)):
         user=user,
         profile=profile,
         applications=applications,
+        recommendations=recommended_jobs,
+        has_recommendation_inputs=has_recommendation_inputs,
     )
 
 

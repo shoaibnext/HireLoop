@@ -12,7 +12,7 @@ logger = logging.getLogger("hireloop.scrapers")
 REMOTIVE_API = "https://remotive.com/api/remote-jobs"
 REMOTEOK_API = "https://remoteok.com/api"
 SKILLZDUNYA_API = "https://skillzdunya.com/api/v1/jobs"
-REMOTEOK_USER_AGENT = "HireLoopJobAggregator/1.0 (+https://github.com/shoaibnext/HireLoop; contact: hello@hireloop.pk)"
+REMOTEOK_USER_AGENT = "Kaamly.pkJobAggregator/1.0 (+https://github.com/shoaibnext/HireLoop)"
 _last_request_at: dict[str, float] = {}
 
 

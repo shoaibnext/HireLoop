@@ -98,13 +98,13 @@ def _send_confirmation(subscription: AlertSubscription, confirm_token: str, unsu
     confirm_url = f"{settings.site_url}/alerts/confirm/{quote(confirm_token, safe='')}"
     unsubscribe_url = _unsubscribe_url(unsubscribe_token)
     body = (
-        "<p>Confirm your HireLoop job alerts by opening this link:</p>"
+        "<p>Confirm your Kaamly.pk job alerts by opening this link:</p>"
         f'<p><a href="{html.escape(confirm_url, quote=True)}">Confirm email alerts</a></p>'
         f'<p><a href="{html.escape(unsubscribe_url, quote=True)}">Unsubscribe</a></p>'
     )
     send_email(
         subscription.email,
-        "Confirm your HireLoop job alerts",
+        "Confirm your Kaamly.pk job alerts",
         body,
         idempotency_key=f"alert-confirm-{subscription.id}-{_token_hash(confirm_token)}",
         unsubscribe_url=unsubscribe_url,
@@ -196,7 +196,7 @@ def unsubscribe(token: str, request: Request, db: Session = Depends(get_db)):
         # Remove the address and preferences immediately after opt-out.
         db.delete(subscription)
         db.commit()
-    return _render(request, message="You have been unsubscribed from HireLoop job alerts.")
+    return _render(request, message="You have been unsubscribed from Kaamly.pk job alerts.")
 
 
 @router.post("/alerts/unsubscribe/{token}", response_class=HTMLResponse)
@@ -274,7 +274,7 @@ def digest_html(jobs: list[Job], *, manage_url: str, unsubscribe_url: str) -> st
         href = f"{settings.site_url}/jobs/{job.id}"
         rows.append(f'<li><a href="{html.escape(href, quote=True)}">{title}</a> — {company} · {location}</li>')
     return (
-        "<p>New HireLoop jobs matching your preferences:</p><ul>"
+        "<p>New Kaamly.pk jobs matching your preferences:</p><ul>"
         + "".join(rows)
         + "</ul><p><a href=\""
         + html.escape(manage_url, quote=True)
@@ -300,7 +300,7 @@ def send_daily_digests(db: Session, email_sender=send_email) -> dict[str, int]:
         try:
             email_sender(
                 subscription.email,
-                f"Your HireLoop job alerts ({len(jobs)} new jobs)",
+                f"Your Kaamly.pk job alerts ({len(jobs)} new jobs)",
                 html_body,
                 idempotency_key=f"daily-digest-{subscription.id}-{utc_day}",
                 unsubscribe_url=unsubscribe_url,

@@ -93,9 +93,9 @@ def _send_email_otp(user: User, code: str) -> bool:
         json={
             "from": settings.email_from,
             "to": [user.email],
-            "subject": "Your HireLoop verification code",
+            "subject": "Your Kaamly.pk verification code",
             "html": (
-                "<p>Enter this code to verify your HireLoop account:</p>"
+                "<p>Enter this code to verify your Kaamly.pk account:</p>"
                 f'<p style="font-size:32px;font-weight:700;letter-spacing:8px">{code}</p>'
                 "<p>This code expires in 10 minutes. If you did not create this account, "
                 "you can ignore this message.</p>"
@@ -408,6 +408,10 @@ async def google_auth_start(request: Request):
         "company_name": company_name,
         "website": website,
     }
+    if source == "login" and request.session.get("seeker_return_to"):
+        request.session["google_signup_profile"]["return_to"] = request.session[
+            "seeker_return_to"
+        ]
     redirect_uri = f"{settings.site_url}/auth/google/callback"
     return await google.authorize_redirect(request, redirect_uri, prompt="select_account")
 
@@ -483,6 +487,7 @@ async def google_auth_callback(request: Request, db: Session = Depends(get_db)):
     request.session.pop("google_signup_profile", None)
     cv_session_id = request.session.get("cv_session_id") if user.role == "candidate" else None
     cv_preferences = request.session.get("cv_preferences") if user.role == "candidate" else None
+    return_to = profile.get("return_to") or request.session.get("seeker_return_to")
     request.session.clear()
     request.session["user_id"] = user.id
     if cv_session_id:
@@ -491,6 +496,8 @@ async def google_auth_callback(request: Request, db: Session = Depends(get_db)):
         request.session["cv_preferences"] = cv_preferences
     csrf_token(request)
     destination = "/account" if user.role == "candidate" else "/employer/dashboard"
+    if user.role == "candidate" and isinstance(return_to, str) and re.fullmatch(r"/jobs/\d+", return_to):
+        destination = return_to
     return RedirectResponse(destination, status_code=303)
 
 
@@ -683,6 +690,7 @@ async def login(request: Request, db: Session = Depends(get_db)):
         return RedirectResponse("/verify-email", status_code=303)
     cv_session_id = request.session.get("cv_session_id") if user.role == "candidate" else None
     cv_preferences = request.session.get("cv_preferences") if user.role == "candidate" else None
+    return_to = request.session.get("seeker_return_to")
     request.session.clear()
     request.session["user_id"] = user.id
     if cv_session_id:
@@ -691,6 +699,8 @@ async def login(request: Request, db: Session = Depends(get_db)):
         request.session["cv_preferences"] = cv_preferences
     csrf_token(request)
     destination = "/account" if user.role == "candidate" else "/employer/dashboard"
+    if user.role == "candidate" and isinstance(return_to, str) and re.fullmatch(r"/jobs/\d+", return_to):
+        destination = return_to
     return RedirectResponse(destination, status_code=303)
 
 

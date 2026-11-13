@@ -245,6 +245,64 @@ class Application(Base):
     )
 
 
+class SeekerJobState(Base):
+    __tablename__ = "seeker_job_states"
+    __table_args__ = (
+        UniqueConstraint("user_id", "job_id", name="uq_seeker_job_state_user_job"),
+        CheckConstraint(
+            "application_status IS NULL OR application_status IN "
+            "('applied', 'interviewing', 'offer', 'rejected')",
+            name="ck_seeker_job_state_status",
+        ),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    job_id: Mapped[int] = mapped_column(
+        ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    is_saved: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    is_hidden: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    application_status: Mapped[str | None] = mapped_column(String(16))
+    private_note: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+
+
+class SeekerPreference(Base):
+    __tablename__ = "seeker_preferences"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    target_roles: Mapped[str] = mapped_column(String(1000), nullable=False, default="")
+    skills: Mapped[str] = mapped_column(String(2000), nullable=False, default="")
+    location: Mapped[str] = mapped_column(String(100), nullable=False, default="")
+    remote_only: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    minimum_salary: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    salary_currency: Mapped[str | None] = mapped_column(String(3))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+
+
+class RecentSearch(Base):
+    __tablename__ = "recent_searches"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    query_string: Mapped[str] = mapped_column(String(2000), nullable=False)
+    searched_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=lambda: datetime.now(UTC)
+    )
+
+
 engine = create_engine(
     settings.database_url,
     connect_args={"check_same_thread": False}
